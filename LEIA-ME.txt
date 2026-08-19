@@ -1,0 +1,19 @@
+PESAGEM DO CURRAL - PACOTE PWA
+
+Arquivos:
+- index.html
+- manifest.json
+- service-worker.js
+- icon-192.png
+- icon-512.png
+
+Para usar no iPhone como aplicativo offline:
+1. Publique TODOS os arquivos em uma hospedagem HTTPS.
+2. Abra o endereço no Safari.
+3. Toque em Compartilhar.
+4. Toque em "Adicionar à Tela de Início".
+5. Abra o app uma vez com internet para concluir o cache.
+6. Depois ele poderá abrir e registrar pesagens offline.
+
+Os dados ficam salvos localmente no navegador do iPhone.
+Use "EXPORTAR CSV" para fazer backup antes de limpar dados do Safari ou remover o app.

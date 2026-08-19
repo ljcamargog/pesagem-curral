@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1f4e78">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Pesagem do Curral</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#17202a}
+header{background:#1f4e78;color:white;padding:18px;text-align:center;font-size:24px;font-weight:bold}
+.wrap{max-width:620px;margin:auto;padding:14px}
+.card{background:white;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+input,button{width:100%;height:56px;font-size:20px;border-radius:10px;padding:10px;box-sizing:border-box}
+input{border:1px solid #ccd3da}
+button{border:0;background:#1f4e78;color:white;font-weight:bold;margin-top:12px}
+.secondary{background:#5f6b76}.danger{background:#b42318}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric{background:#f7f9fb;border-radius:10px;padding:12px}
+.metric small{display:block;color:#667085}.metric strong{display:block;font-size:20px;margin-top:4px}
+table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #eee;text-align:center}
+.note{font-size:13px;color:#667085}.highlight{background:#fff4cc}
+</style>
+</head>
+<body>
+<header>🐂 Pesagem do Curral</header>
+<div class="wrap">
+
+<div class="card">
+<h2>Registrar peso</h2>
+<input id="peso" type="number" inputmode="decimal" step="0.1" placeholder="Peso do animal em kg">
+<button onclick="registrar()">REGISTRAR PESAGEM</button>
+<p class="note">Os animais são numerados automaticamente.</p>
+</div>
+
+<div class="card">
+<h2>Resumo</h2>
+<div class="grid">
+<div class="metric"><small>Animais pesados</small><strong id="qtd">0</strong></div>
+<div class="metric"><small>Peso total</small><strong id="totalkg">0 kg</strong></div>
+<div class="metric"><small>Peso médio</small><strong id="mediakg">0 kg</strong></div>
+<div class="metric"><small>Total de arrobas</small><strong id="totalarroba">0 @</strong></div>
+<div class="metric"><small>Média de arrobas</small><strong id="mediaarroba">0 @</strong></div>
+<div class="metric"><small>Valor médio/animal</small><strong id="valormedio">R$ 0,00</strong></div>
+</div>
+
+<h3>Preço da arroba (R$)</h3>
+<input class="highlight" id="precoArroba" type="number" inputmode="decimal" step="0.01" value="320" oninput="atualizar()">
+
+<h3>Preço por kg (R$)</h3>
+<input class="highlight" id="precoKg" type="number" inputmode="decimal" step="0.01" value="10.67" oninput="atualizar()">
+
+<div class="grid" style="margin-top:10px">
+<div class="metric"><small>Total vendendo por @</small><strong id="valorArroba">R$ 0,00</strong></div>
+<div class="metric"><small>Total vendendo por kg</small><strong id="valorKg">R$ 0,00</strong></div>
+<div class="metric"><small>2 menores</small><strong id="menores">—</strong></div>
+<div class="metric"><small>2 maiores</small><strong id="maiores">—</strong></div>
+</div>
+</div>
+
+<div class="card">
+<h2>Pesagens</h2>
+<table><thead><tr><th>Animal</th><th>kg</th><th>@</th></tr></thead><tbody id="lista"></tbody></table>
+<button class="secondary" onclick="desfazer()">DESFAZER ÚLTIMA</button>
+<button class="secondary" onclick="exportarCSV()">EXPORTAR CSV</button>
+<button class="danger" onclick="limpar()">NOVA PESAGEM / LIMPAR</button>
+</div>
+
+</div>
+
+<script>
+let dados=JSON.parse(localStorage.getItem('pesagemCurralSemBrinco')||'[]');
+
+function moeda(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+function salvar(){
+ localStorage.setItem('pesagemCurralSemBrinco',JSON.stringify(dados));
+ localStorage.setItem('precoArrobaCurral',document.getElementById('precoArroba').value);
+ localStorage.setItem('precoKgCurral',document.getElementById('precoKg').value);
+}
+function registrar(){
+ const campo=document.getElementById('peso');
+ const peso=parseFloat(campo.value);
+ if(!peso||peso<=0){alert('Digite um peso válido.');return}
+ dados.push({numero:dados.length+1,peso:peso});
+ campo.value=''; campo.focus(); salvar(); atualizar();
+}
+function atualizar(){
+ const pa=parseFloat(document.getElementById('precoArroba').value)||0;
+ const pk=parseFloat(document.getElementById('precoKg').value)||0;
+ const n=dados.length, total=dados.reduce((s,x)=>s+x.peso,0), media=n?total/n:0;
+ const totalA=total/30, mediaA=n?totalA/n:0, valorA=totalA*pa, valorK=total*pk;
+ document.getElementById('qtd').textContent=n;
+ document.getElementById('totalkg').textContent=total.toFixed(1)+' kg';
+ document.getElementById('mediakg').textContent=media.toFixed(1)+' kg';
+ document.getElementById('totalarroba').textContent=totalA.toFixed(2)+' @';
+ document.getElementById('mediaarroba').textContent=mediaA.toFixed(2)+' @';
+ document.getElementById('valorArroba').textContent=moeda(valorA);
+ document.getElementById('valorKg').textContent=moeda(valorK);
+ document.getElementById('valormedio').textContent=moeda(n?Math.max(valorA,valorK)/n:0);
+ const ord=dados.slice().sort((a,b)=>a.peso-b.peso);
+ document.getElementById('menores').textContent=ord.length?ord.slice(0,2).map(x=>'A'+x.numero+' '+(x.peso/30).toFixed(2)+'@').join(' / '):'—';
+ document.getElementById('maiores').textContent=ord.length?ord.slice(-2).reverse().map(x=>'A'+x.numero+' '+(x.peso/30).toFixed(2)+'@').join(' / '):'—';
+ document.getElementById('lista').innerHTML=dados.slice().reverse().map(x=>`<tr><td>Animal ${x.numero}</td><td>${x.peso.toFixed(1)}</td><td>${(x.peso/30).toFixed(2)}</td></tr>`).join('');
+ salvar();
+}
+function desfazer(){if(dados.length){dados.pop();dados=dados.map((x,i)=>({numero:i+1,peso:x.peso}));salvar();atualizar()}}
+function limpar(){if(confirm('Apagar todos os registros e iniciar nova pesagem?')){dados=[];localStorage.removeItem('pesagemCurralSemBrinco');atualizar()}}
+function exportarCSV(){
+ if(!dados.length){alert('Não há pesagens para exportar.');return}
+ let csv='Animal;Peso (kg);Arrobas\n'+dados.map(x=>`Animal ${x.numero};${x.peso.toFixed(1)};${(x.peso/30).toFixed(2)}`).join('\n');
+ const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='pesagem_curral.csv'; a.click();
+}
+document.getElementById('precoArroba').value=localStorage.getItem('precoArrobaCurral')||320;
+document.getElementById('precoKg').value=localStorage.getItem('precoKgCurral')||10.67;
+atualizar();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js'));
+}
+</script>
+</body>
+</html>
