@@ -1,125 +1,67 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#1f4e78">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-<title>Pesagem do Curral</title>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f4e78"><link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png"><title>Pesagem Curral</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#17202a}
-header{background:#1f4e78;color:white;padding:18px;text-align:center;font-size:24px;font-weight:bold}
-.wrap{max-width:620px;margin:auto;padding:14px}
-.card{background:white;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-input,button{width:100%;height:56px;font-size:20px;border-radius:10px;padding:10px;box-sizing:border-box}
-input{border:1px solid #ccd3da}
-button{border:0;background:#1f4e78;color:white;font-weight:bold;margin-top:12px}
-.secondary{background:#5f6b76}.danger{background:#b42318}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.metric{background:#f7f9fb;border-radius:10px;padding:12px}
-.metric small{display:block;color:#667085}.metric strong{display:block;font-size:20px;margin-top:4px}
-table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #eee;text-align:center}
-.note{font-size:13px;color:#667085}.highlight{background:#fff4cc}
-</style>
-</head>
-<body>
-<header>🐂 Pesagem do Curral</header>
-<div class="wrap">
+body{font-family:Arial;margin:0;background:#f3f5f7;color:#17202a}header{background:#1f4e78;color:#fff;padding:17px;text-align:center;font-size:23px;font-weight:bold}.w{max-width:680px;margin:auto;padding:12px}.c{background:#fff;padding:15px;margin-bottom:12px;border-radius:14px;box-shadow:0 2px 8px #0001}input,select,button{width:100%;box-sizing:border-box;padding:11px;margin:5px 0;font-size:17px;border-radius:9px}input,select{border:1px solid #ccd3da}button{border:0;background:#1f4e78;color:#fff;font-weight:bold;min-height:50px}.g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.m{background:#f6f8fa;padding:10px;border-radius:9px}.m small{display:block;color:#667085}.m b{display:block;font-size:18px;margin-top:4px}.green{background:#287a45}.gray{background:#5f6b76}.gold{background:#946200}.red{background:#b42318}.hidden{display:none}.hi{background:#fff4cc}.badge{background:#eaf2f8;padding:10px;border-radius:9px;font-weight:bold}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 3px;border-bottom:1px solid #eee;text-align:center}</style></head><body>
+<header>🐂 Pesagem do Curral</header><div class="w">
+<div class="c"><h2>Lotes</h2><select id="sel" onchange="selectLot(this.value)"><option value="">Selecione um lote</option></select>
+<input id="nome" placeholder="Novo lote. Ex.: Vacada mocha"><input id="antNovo" type="number" inputmode="decimal" placeholder="Peso médio anterior (kg) - opcional">
+<button class="green" onclick="newLot()">CRIAR NOVO LOTE</button><div id="badge" class="badge hidden"></div></div>
 
-<div class="card">
-<h2>Registrar peso</h2>
-<input id="peso" type="number" inputmode="decimal" step="0.1" placeholder="Peso do animal em kg">
-<button onclick="registrar()">REGISTRAR PESAGEM</button>
-<p class="note">Os animais são numerados automaticamente.</p>
-</div>
+<div id="pesoCard" class="c hidden"><h2>Pesagem rápida</h2><input id="peso" type="number" inputmode="decimal" placeholder="Peso do animal em kg"><button onclick="add()">REGISTRAR PESAGEM</button></div>
 
-<div class="card">
-<h2>Resumo</h2>
-<div class="grid">
-<div class="metric"><small>Animais pesados</small><strong id="qtd">0</strong></div>
-<div class="metric"><small>Peso total</small><strong id="totalkg">0 kg</strong></div>
-<div class="metric"><small>Peso médio</small><strong id="mediakg">0 kg</strong></div>
-<div class="metric"><small>Total de arrobas</small><strong id="totalarroba">0 @</strong></div>
-<div class="metric"><small>Média de arrobas</small><strong id="mediaarroba">0 @</strong></div>
-<div class="metric"><small>Valor médio/animal</small><strong id="valormedio">R$ 0,00</strong></div>
-</div>
+<div id="resCard" class="c hidden"><h2>Resumo do lote</h2><div class="g">
+<div class="m"><small>Animais</small><b id="n">0</b></div><div class="m"><small>Peso total</small><b id="kg">0 kg</b></div>
+<div class="m"><small>Peso médio</small><b id="med">0 kg</b></div><div class="m"><small>Total arrobas</small><b id="ar">0 @</b></div>
+<div class="m"><small>Média arrobas</small><b id="ma">0 @</b></div><div class="m"><small>Ganho médio</small><b id="ganho">—</b></div>
+<div class="m"><small>2 menores</small><b id="mins">—</b></div><div class="m"><small>2 maiores</small><b id="maxs">—</b></div></div>
+<button class="gray" onclick="undo()">DESFAZER ÚLTIMA PESAGEM</button></div>
 
-<h3>Preço da arroba (R$)</h3>
-<input class="highlight" id="precoArroba" type="number" inputmode="decimal" step="0.01" value="320" oninput="atualizar()">
+<div id="valCard" class="c hidden"><h2>Valores do lote</h2>
+<select id="modo" onchange="config()"><option value="kg">Negociar por kg</option><option value="arroba">Negociar por arroba</option></select>
+<div id="kgBox"><input id="pKg" class="hi" type="number" inputmode="decimal" step="0.01" placeholder="Preço por kg" oninput="config()"></div>
+<div id="aBox" class="hidden"><input id="pA" class="hi" type="number" inputmode="decimal" step="0.01" placeholder="Preço por arroba" oninput="config()"></div>
+<input id="antEdit" type="number" inputmode="decimal" placeholder="Peso médio anterior do lote" oninput="config()">
+<div class="g"><div class="m"><small>Valor do lote</small><b id="vl">R$ 0</b></div><div class="m"><small>Média/animal</small><b id="vm">R$ 0</b></div>
+<div class="m"><small>Equiv. R$/kg</small><b id="eqkg">R$ 0</b></div><div class="m"><small>Equiv. R$/@</small><b id="eqa">R$ 0</b></div></div>
+<button class="green" onclick="shareLot()">COMPARTILHAR TEXTO DO LOTE</button><button class="gold" onclick="pdfLot()">COMPARTILHAR PDF DO LOTE</button></div>
 
-<h3>Preço por kg (R$)</h3>
-<input class="highlight" id="precoKg" type="number" inputmode="decimal" step="0.01" value="10.67" oninput="atualizar()">
+<div id="listCard" class="c hidden"><h2>Pesagens do lote</h2><table><thead><tr><th>Animal</th><th>kg</th><th>@</th></tr></thead><tbody id="list"></tbody></table></div>
 
-<div class="grid" style="margin-top:10px">
-<div class="metric"><small>Total vendendo por @</small><strong id="valorArroba">R$ 0,00</strong></div>
-<div class="metric"><small>Total vendendo por kg</small><strong id="valorKg">R$ 0,00</strong></div>
-<div class="metric"><small>2 menores</small><strong id="menores">—</strong></div>
-<div class="metric"><small>2 maiores</small><strong id="maiores">—</strong></div>
-</div>
-</div>
+<div class="c"><h2>Resumo geral — todos os lotes</h2><div class="g">
+<div class="m"><small>Lotes</small><b id="gl">0</b></div><div class="m"><small>Animais</small><b id="gn">0</b></div>
+<div class="m"><small>Peso total</small><b id="gkg">0 kg</b></div><div class="m"><small>Peso médio</small><b id="gm">0 kg</b></div>
+<div class="m"><small>Arrobas</small><b id="ga">0 @</b></div><div class="m"><small>Média arrobas</small><b id="gma">0 @</b></div>
+<div class="m"><small>Valor total</small><b id="gv">R$ 0</b></div><div class="m"><small>Média/animal</small><b id="gmv">R$ 0</b></div></div>
+<button onclick="shareAll()">COMPARTILHAR RESUMO GERAL</button><button class="gold" onclick="pdfAll()">COMPARTILHAR PDF GERAL</button>
+<button class="gray" onclick="csv()">EXPORTAR CSV COMPLETO</button><button class="gray" onclick="backup()">FAZER BACKUP COMPLETO</button>
+<button class="gray" onclick="document.getElementById('file').click()">RESTAURAR BACKUP</button><input hidden id="file" type="file" accept=".json" onchange="restore(this.files[0])"></div>
 
-<div class="card">
-<h2>Pesagens</h2>
-<table><thead><tr><th>Animal</th><th>kg</th><th>@</th></tr></thead><tbody id="lista"></tbody></table>
-<button class="secondary" onclick="desfazer()">DESFAZER ÚLTIMA</button>
-<button class="secondary" onclick="exportarCSV()">EXPORTAR CSV</button>
-<button class="danger" onclick="limpar()">NOVA PESAGEM / LIMPAR</button>
-</div>
-
-</div>
+<div class="c"><h2>Lotes registrados</h2><table><thead><tr><th>Lote</th><th>Animais</th><th>kg</th><th>@</th><th>Valor</th></tr></thead><tbody id="lots"></tbody></table>
+<button class="red" onclick="delLot()">EXCLUIR LOTE SELECIONADO</button></div></div>
 
 <script>
-let dados=JSON.parse(localStorage.getItem('pesagemCurralSemBrinco')||'[]');
-
-function moeda(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
-function salvar(){
- localStorage.setItem('pesagemCurralSemBrinco',JSON.stringify(dados));
- localStorage.setItem('precoArrobaCurral',document.getElementById('precoArroba').value);
- localStorage.setItem('precoKgCurral',document.getElementById('precoKg').value);
-}
-function registrar(){
- const campo=document.getElementById('peso');
- const peso=parseFloat(campo.value);
- if(!peso||peso<=0){alert('Digite um peso válido.');return}
- dados.push({numero:dados.length+1,peso:peso});
- campo.value=''; campo.focus(); salvar(); atualizar();
-}
-function atualizar(){
- const pa=parseFloat(document.getElementById('precoArroba').value)||0;
- const pk=parseFloat(document.getElementById('precoKg').value)||0;
- const n=dados.length, total=dados.reduce((s,x)=>s+x.peso,0), media=n?total/n:0;
- const totalA=total/30, mediaA=n?totalA/n:0, valorA=totalA*pa, valorK=total*pk;
- document.getElementById('qtd').textContent=n;
- document.getElementById('totalkg').textContent=total.toFixed(1)+' kg';
- document.getElementById('mediakg').textContent=media.toFixed(1)+' kg';
- document.getElementById('totalarroba').textContent=totalA.toFixed(2)+' @';
- document.getElementById('mediaarroba').textContent=mediaA.toFixed(2)+' @';
- document.getElementById('valorArroba').textContent=moeda(valorA);
- document.getElementById('valorKg').textContent=moeda(valorK);
- document.getElementById('valormedio').textContent=moeda(n?Math.max(valorA,valorK)/n:0);
- const ord=dados.slice().sort((a,b)=>a.peso-b.peso);
- document.getElementById('menores').textContent=ord.length?ord.slice(0,2).map(x=>'A'+x.numero+' '+(x.peso/30).toFixed(2)+'@').join(' / '):'—';
- document.getElementById('maiores').textContent=ord.length?ord.slice(-2).reverse().map(x=>'A'+x.numero+' '+(x.peso/30).toFixed(2)+'@').join(' / '):'—';
- document.getElementById('lista').innerHTML=dados.slice().reverse().map(x=>`<tr><td>Animal ${x.numero}</td><td>${x.peso.toFixed(1)}</td><td>${(x.peso/30).toFixed(2)}</td></tr>`).join('');
- salvar();
-}
-function desfazer(){if(dados.length){dados.pop();dados=dados.map((x,i)=>({numero:i+1,peso:x.peso}));salvar();atualizar()}}
-function limpar(){if(confirm('Apagar todos os registros e iniciar nova pesagem?')){dados=[];localStorage.removeItem('pesagemCurralSemBrinco');atualizar()}}
-function exportarCSV(){
- if(!dados.length){alert('Não há pesagens para exportar.');return}
- let csv='Animal;Peso (kg);Arrobas\n'+dados.map(x=>`Animal ${x.numero};${x.peso.toFixed(1)};${(x.peso/30).toFixed(2)}`).join('\n');
- const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
- const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='pesagem_curral.csv'; a.click();
-}
-document.getElementById('precoArroba').value=localStorage.getItem('precoArrobaCurral')||320;
-document.getElementById('precoKg').value=localStorage.getItem('precoKgCurral')||10.67;
-atualizar();
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js'));
-}
-</script>
-</body>
-</html>
+let S=JSON.parse(localStorage.getItem('curralV4')||'null');
+function migrate(){if(S&&Array.isArray(S.lotes))return;let gk=+(localStorage.getItem('precoKgCurral')||10.67),ga=+(localStorage.getItem('precoArrobaCurral')||320),v3=JSON.parse(localStorage.getItem('curralV3')||'null');S={version:4,lotes:[],atual:null};if(v3&&Array.isArray(v3.lotes)){S.lotes=v3.lotes.map(l=>({id:l.id||Date.now()+Math.random(),nome:l.nome||'Lote',anterior:l.ant??l.pesoAnterior??null,pesos:Array.isArray(l.p)?l.p:(l.pesos||[]),modo:'kg',precoKg:gk,precoArroba:ga}));S.atual=v3.atual||null}else{let o=JSON.parse(localStorage.getItem('pesagemCurralSemBrinco')||'[]');if(o.length){let id=Date.now();S.lotes=[{id,nome:'Pesagem anterior',anterior:null,pesos:o.map(x=>+x.peso).filter(Boolean),modo:'kg',precoKg:gk,precoArroba:ga}];S.atual=id}}}migrate();
+const $=id=>document.getElementById(id),money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),cur=()=>S.lotes.find(x=>x.id==S.atual),calc=p=>{let n=p.length,t=p.reduce((a,b)=>a+(+b||0),0);return{n,t,m:n?t/n:0,a:t/30,ma:n?t/30/n:0}},value=l=>{let c=calc(l.pesos);return l.modo==='arroba'?c.a*(+l.precoArroba||0):c.t*(+l.precoKg||0)};
+function save(){localStorage.setItem('curralV4',JSON.stringify(S))}
+function newLot(){let nm=$('nome').value.trim();if(!nm)return alert('Digite o nome do lote.');let id=Date.now(),a=parseFloat($('antNovo').value);S.lotes.push({id,nome:nm,anterior:isNaN(a)?null:a,pesos:[],modo:'kg',precoKg:+(localStorage.getItem('precoKgCurral')||10.67),precoArroba:+(localStorage.getItem('precoArrobaCurral')||320)});S.atual=id;$('nome').value='';$('antNovo').value='';save();render();$('peso').focus()}
+function selectLot(v){S.atual=v?+v:null;save();render()}
+function add(){let l=cur(),p=parseFloat($('peso').value);if(!l)return alert('Crie ou selecione um lote.');if(!p||p<=0)return alert('Digite um peso válido.');l.pesos.push(p);$('peso').value='';save();render();$('peso').focus()}
+function undo(){let l=cur();if(l&&l.pesos.length){l.pesos.pop();save();render()}}
+function config(){let l=cur();if(!l)return;l.modo=$('modo').value;l.precoKg=+$('pKg').value||0;l.precoArroba=+$('pA').value||0;let a=parseFloat($('antEdit').value);l.anterior=isNaN(a)?null:a;localStorage.setItem('precoKgCurral',l.precoKg||10.67);localStorage.setItem('precoArrobaCurral',l.precoArroba||320);save();render(false)}
+function render(reset=true){let l=cur();$('sel').innerHTML='<option value="">Selecione um lote</option>'+S.lotes.map(x=>`<option value="${x.id}" ${l&&x.id==l.id?'selected':''}>${x.nome}</option>`).join('');['pesoCard','resCard','valCard','listCard'].forEach(id=>$(id).classList.toggle('hidden',!l));$('badge').classList.toggle('hidden',!l);
+if(l){let c=calc(l.pesos),v=value(l),o=l.pesos.map((p,i)=>({p,i:i+1})).sort((a,b)=>a.p-b.p);$('badge').textContent='Lote atual: '+l.nome;$('n').textContent=c.n;$('kg').textContent=c.t.toFixed(1)+' kg';$('med').textContent=c.m.toFixed(1)+' kg';$('ar').textContent=c.a.toFixed(2)+' @';$('ma').textContent=c.ma.toFixed(2)+' @';$('ganho').textContent=l.anterior&&c.n?(c.m-l.anterior).toFixed(1)+' kg':'—';$('mins').textContent=o.slice(0,2).map(z=>'A'+z.i+' '+(z.p/30).toFixed(2)+'@').join(' / ')||'—';$('maxs').textContent=o.slice(-2).reverse().map(z=>'A'+z.i+' '+(z.p/30).toFixed(2)+'@').join(' / ')||'—';if(reset){$('modo').value=l.modo;$('pKg').value=(+l.precoKg||0).toFixed(2);$('pA').value=(+l.precoArroba||0).toFixed(2);$('antEdit').value=l.anterior??''}$('kgBox').classList.toggle('hidden',$('modo').value!=='kg');$('aBox').classList.toggle('hidden',$('modo').value!=='arroba');$('vl').textContent=money(v);$('vm').textContent=money(c.n?v/c.n:0);$('eqkg').textContent=money(c.t?v/c.t:0);$('eqa').textContent=money(c.a?v/c.a:0);$('list').innerHTML=l.pesos.map((p,i)=>`<tr><td>Animal ${i+1}</td><td>${p.toFixed(1)}</td><td>${(p/30).toFixed(2)}</td></tr>`).join('')}
+let all=S.lotes.flatMap(x=>x.pesos),g=calc(all),tv=S.lotes.reduce((s,x)=>s+value(x),0);$('gl').textContent=S.lotes.length;$('gn').textContent=g.n;$('gkg').textContent=g.t.toFixed(1)+' kg';$('gm').textContent=g.m.toFixed(1)+' kg';$('ga').textContent=g.a.toFixed(2)+' @';$('gma').textContent=g.ma.toFixed(2)+' @';$('gv').textContent=money(tv);$('gmv').textContent=money(g.n?tv/g.n:0);$('lots').innerHTML=S.lotes.map(x=>{let c=calc(x.pesos);return `<tr><td>${x.nome}</td><td>${c.n}</td><td>${c.t.toFixed(1)}</td><td>${c.a.toFixed(2)}</td><td>${money(value(x))}</td></tr>`}).join('');save()}
+function lotText(l){let c=calc(l.pesos),v=value(l),m=l.modo==='arroba'?money(l.precoArroba)+'/@':money(l.precoKg)+'/kg';return `PESAGEM DO CURRAL — ${l.nome}\n\nAnimais: ${c.n}\nPeso total: ${c.t.toFixed(1)} kg\nPeso médio: ${c.m.toFixed(1)} kg\nTotal: ${c.a.toFixed(2)} @\nMédia: ${c.ma.toFixed(2)} @\n${l.anterior?'Peso médio anterior: '+l.anterior.toFixed(1)+' kg\nGanho médio: '+(c.m-l.anterior).toFixed(1)+' kg\n':''}Negociação: ${m}\nValor estimado: ${money(v)}\nMédia por animal: ${money(c.n?v/c.n:0)}\n\n`+l.pesos.map((p,i)=>`Animal ${i+1} — ${p.toFixed(1)} kg — ${(p/30).toFixed(2)} @`).join('\n')}
+function allText(){let all=S.lotes.flatMap(x=>x.pesos),g=calc(all),tv=S.lotes.reduce((s,x)=>s+value(x),0);return `RESUMO GERAL — PESAGEM DO CURRAL\n\nLotes: ${S.lotes.length}\nAnimais: ${g.n}\nPeso total: ${g.t.toFixed(1)} kg\nPeso médio: ${g.m.toFixed(1)} kg\nArrobas: ${g.a.toFixed(2)} @\nValor total: ${money(tv)}\n\n`+S.lotes.map(l=>{let c=calc(l.pesos),m=l.modo==='arroba'?money(l.precoArroba)+'/@':money(l.precoKg)+'/kg';return `${l.nome}: ${c.n} animais | ${c.t.toFixed(1)} kg | ${c.a.toFixed(2)} @ | ${m} | ${money(value(l))}`}).join('\n')}
+async function share(t){if(navigator.share)try{await navigator.share({text:t})}catch(e){}else{navigator.clipboard.writeText(t);alert('Relatório copiado.')}}
+function shareLot(){let l=cur();if(l)share(lotText(l))}function shareAll(){share(allText())}
+function pdfBlob(lines){let txt=lines.map(x=>String(x).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x20-\x7E]/g,'')).join(' | ');let stream=`BT /F1 10 Tf 40 800 Td (${txt.replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}) Tj ET`;let o=['','<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>',`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>`,`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'];let out='%PDF-1.4\n',off=[0];for(let i=1;i<o.length;i++){off[i]=out.length;out+=`${i} 0 obj\n${o[i]}\nendobj\n`}let x=out.length;out+=`xref\n0 ${o.length}\n0000000000 65535 f \n`;for(let i=1;i<o.length;i++)out+=String(off[i]).padStart(10,'0')+' 00000 n \n';out+=`trailer\n<< /Size ${o.length} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF`;return new Blob([out],{type:'application/pdf'})}
+async function sharePdf(name,text){let b=pdfBlob(text.split('\n')),f=new File([b],name,{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[f]}))try{await navigator.share({files:[f]});return}catch(e){}let a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click()}
+function pdfLot(){let l=cur();if(l)sharePdf('pesagem_'+l.nome.replace(/[^a-z0-9]/gi,'_')+'.pdf',lotText(l))}function pdfAll(){sharePdf('pesagem_resumo_geral.pdf',allText())}
+function dl(data,name,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()}function csv(){let r=['Lote;Animal;Peso kg;Arrobas;Forma;Preco;Valor lote'];S.lotes.forEach(l=>l.pesos.forEach((p,i)=>r.push(`${l.nome};Animal ${i+1};${p};${(p/30).toFixed(2)};${l.modo};${l.modo==='arroba'?l.precoArroba:l.precoKg};${value(l).toFixed(2)}`)));dl('\ufeff'+r.join('\n'),'pesagem_curral.csv','text/csv')}
+function backup(){dl(JSON.stringify({version:4,state:S},null,2),'backup_curral_v4.json','application/json')}function restore(f){if(!f)return;let r=new FileReader;r.onload=()=>{try{let b=JSON.parse(r.result),st=b.state||b.S;if(!st||!Array.isArray(st.lotes))throw 0;if(confirm('Restaurar backup e substituir dados atuais?')){S=st;save();render();alert('Backup restaurado.')}}catch(e){alert('Backup inválido.')}};r.readAsText(f)}function delLot(){let l=cur();if(l&&confirm('Excluir '+l.nome+'?')){S.lotes=S.lotes.filter(x=>x.id!=l.id);S.atual=null;save();render()}}render();if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js'));
+</script></body></html>
