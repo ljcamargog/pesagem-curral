@@ -1,13 +1,13 @@
-PESAGEM DO CURRAL V4.1
+PESAGEM DO CURRAL V4.2
 
-CORRECOES:
-- PDF por lote agora organizado em secoes, linhas e varias paginas.
-- PDF geral organizado.
-- Diferenca da media anterior com sinal + ou - e descricao mais clara.
-- Menores e maiores apresentados de forma mais clara com poucos animais.
-- Mantem todos os recursos da V4.
-- Usa o mesmo armazenamento curralV4, portanto preserva os lotes e pesagens atuais.
+MELHORIAS NO PDF:
+- Acentuação correta em títulos e textos.
+- Destaque visual para Peso Total, Total de Arrobas e Valor do Lote.
+- Tabela organizada: Animal | Peso (kg) | Arrobas (@).
+- Melhor leitura em várias páginas.
+- PDF geral também com destaques.
+- Mantém todos os lotes e dados da V4/V4.1, pois continua usando curralV4.
 
 NO GITHUB:
-Substitua index.html, manifest.json, service-worker.js, icon-192.png e icon-512.png.
-Depois aguarde o novo deployment e abra pelo Safari uma vez com internet.
+Substitua os arquivos desta pasta no mesmo repositório.
+Depois aguarde o novo deployment e abra o app pelo Safari uma vez com internet.

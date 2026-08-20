@@ -129,7 +129,7 @@ function migrate(){
       ga=+(localStorage.getItem('precoArrobaCurral')||320),
       v3=JSON.parse(localStorage.getItem('curralV3')||'null');
 
-  S={version:4.1,lotes:[],atual:null};
+  S={version:4.2,lotes:[],atual:null};
 
   if(v3&&Array.isArray(v3.lotes)){
     S.lotes=v3.lotes.map(l=>({
@@ -166,134 +166,50 @@ const value=l=>{
   let c=calc(l.pesos);
   return l.modo==='arroba'?c.a*(+l.precoArroba||0):c.t*(+l.precoKg||0)
 };
-
 function save(){localStorage.setItem('curralV4',JSON.stringify(S))}
-
 function newLot(){
-  let nm=$('nome').value.trim();
-  if(!nm)return alert('Digite o nome do lote.');
+  let nm=$('nome').value.trim(); if(!nm)return alert('Digite o nome do lote.');
   let id=Date.now(),a=parseFloat($('antNovo').value);
-  S.lotes.push({
-    id,nome:nm,anterior:isNaN(a)?null:a,pesos:[],
-    modo:'kg',
+  S.lotes.push({id,nome:nm,anterior:isNaN(a)?null:a,pesos:[],modo:'kg',
     precoKg:+(localStorage.getItem('precoKgCurral')||10.67),
-    precoArroba:+(localStorage.getItem('precoArrobaCurral')||320)
-  });
-  S.atual=id;
-  $('nome').value='';$('antNovo').value='';
-  save();render();$('peso').focus()
+    precoArroba:+(localStorage.getItem('precoArrobaCurral')||320)});
+  S.atual=id;$('nome').value='';$('antNovo').value='';save();render();$('peso').focus()
 }
-
 function selectLot(v){S.atual=v?+v:null;save();render()}
-
-function add(){
-  let l=cur(),p=parseFloat($('peso').value);
-  if(!l)return alert('Crie ou selecione um lote.');
-  if(!p||p<=0)return alert('Digite um peso válido.');
-  l.pesos.push(p);
-  $('peso').value='';
-  save();render();$('peso').focus()
-}
-
-function undo(){
-  let l=cur();
-  if(l&&l.pesos.length){l.pesos.pop();save();render()}
-}
-
-function config(){
-  let l=cur();if(!l)return;
-  l.modo=$('modo').value;
-  l.precoKg=+$('pKg').value||0;
-  l.precoArroba=+$('pA').value||0;
-  let a=parseFloat($('antEdit').value);
-  l.anterior=isNaN(a)?null:a;
-  localStorage.setItem('precoKgCurral',l.precoKg||10.67);
-  localStorage.setItem('precoArrobaCurral',l.precoArroba||320);
-  save();render(false)
-}
-
-function extremosText(o, menor=true){
-  if(o.length===0)return '—';
-  if(o.length===1)return `A${o[0].i} ${(o[0].p/30).toFixed(2)}@`;
-  let arr=menor?o.slice(0,2):o.slice(-2).reverse();
-  return arr.map(z=>'A'+z.i+' '+(z.p/30).toFixed(2)+'@').join(' / ');
-}
+function add(){let l=cur(),p=parseFloat($('peso').value);if(!l)return alert('Crie ou selecione um lote.');if(!p||p<=0)return alert('Digite um peso válido.');l.pesos.push(p);$('peso').value='';save();render();$('peso').focus()}
+function undo(){let l=cur();if(l&&l.pesos.length){l.pesos.pop();save();render()}}
+function config(){let l=cur();if(!l)return;l.modo=$('modo').value;l.precoKg=+$('pKg').value||0;l.precoArroba=+$('pA').value||0;let a=parseFloat($('antEdit').value);l.anterior=isNaN(a)?null:a;localStorage.setItem('precoKgCurral',l.precoKg||10.67);localStorage.setItem('precoArrobaCurral',l.precoArroba||320);save();render(false)}
+function extremosText(o,menor=true){if(o.length===0)return '—';if(o.length===1)return `A${o[0].i} ${(o[0].p/30).toFixed(2)}@`;let arr=menor?o.slice(0,2):o.slice(-2).reverse();return arr.map(z=>'A'+z.i+' '+(z.p/30).toFixed(2)+'@').join(' / ')}
 
 function render(reset=true){
   let l=cur();
-  $('sel').innerHTML='<option value="">Selecione um lote</option>'+
-    S.lotes.map(x=>`<option value="${x.id}" ${l&&x.id==l.id?'selected':''}>${x.nome}</option>`).join('');
-
+  $('sel').innerHTML='<option value="">Selecione um lote</option>'+S.lotes.map(x=>`<option value="${x.id}" ${l&&x.id==l.id?'selected':''}>${x.nome}</option>`).join('');
   ['pesoCard','resCard','valCard','listCard'].forEach(id=>$(id).classList.toggle('hidden',!l));
   $('badge').classList.toggle('hidden',!l);
 
   if(l){
-    let c=calc(l.pesos),v=value(l),
-        o=l.pesos.map((p,i)=>({p,i:i+1})).sort((a,b)=>a.p-b.p);
-
+    let c=calc(l.pesos),v=value(l),o=l.pesos.map((p,i)=>({p,i:i+1})).sort((a,b)=>a.p-b.p);
     $('badge').textContent='Lote atual: '+l.nome;
-    $('n').textContent=c.n;
-    $('kg').textContent=c.t.toFixed(1)+' kg';
-    $('med').textContent=c.m.toFixed(1)+' kg';
-    $('ar').textContent=c.a.toFixed(2)+' @';
-    $('ma').textContent=c.ma.toFixed(2)+' @';
+    $('n').textContent=c.n;$('kg').textContent=c.t.toFixed(1)+' kg';$('med').textContent=c.m.toFixed(1)+' kg';
+    $('ar').textContent=c.a.toFixed(2)+' @';$('ma').textContent=c.ma.toFixed(2)+' @';
+    if(l.anterior&&c.n){let d=c.m-l.anterior;$('ganho').textContent=(d>=0?'+':'')+d.toFixed(1)+' kg'}else $('ganho').textContent='—';
+    $('mins').textContent=extremosText(o,true);$('maxs').textContent=extremosText(o,false);
 
-    if(l.anterior&&c.n){
-      let dif=c.m-l.anterior;
-      $('ganho').textContent=(dif>=0?'+':'')+dif.toFixed(1)+' kg';
-    }else{
-      $('ganho').textContent='—';
-    }
-
-    $('mins').textContent=extremosText(o,true);
-    $('maxs').textContent=extremosText(o,false);
-
-    if(reset){
-      $('modo').value=l.modo;
-      $('pKg').value=(+l.precoKg||0).toFixed(2);
-      $('pA').value=(+l.precoArroba||0).toFixed(2);
-      $('antEdit').value=l.anterior??'';
-    }
-
-    $('kgBox').classList.toggle('hidden',$('modo').value!=='kg');
-    $('aBox').classList.toggle('hidden',$('modo').value!=='arroba');
-
-    $('vl').textContent=money(v);
-    $('vm').textContent=money(c.n?v/c.n:0);
-    $('eqkg').textContent=money(c.t?v/c.t:0);
-    $('eqa').textContent=money(c.a?v/c.a:0);
-
-    $('list').innerHTML=l.pesos.map((p,i)=>
-      `<tr><td>Animal ${i+1}</td><td>${p.toFixed(1)}</td><td>${(p/30).toFixed(2)}</td></tr>`
-    ).join('');
+    if(reset){$('modo').value=l.modo;$('pKg').value=(+l.precoKg||0).toFixed(2);$('pA').value=(+l.precoArroba||0).toFixed(2);$('antEdit').value=l.anterior??''}
+    $('kgBox').classList.toggle('hidden',$('modo').value!=='kg');$('aBox').classList.toggle('hidden',$('modo').value!=='arroba');
+    $('vl').textContent=money(v);$('vm').textContent=money(c.n?v/c.n:0);$('eqkg').textContent=money(c.t?v/c.t:0);$('eqa').textContent=money(c.a?v/c.a:0);
+    $('list').innerHTML=l.pesos.map((p,i)=>`<tr><td>Animal ${i+1}</td><td>${p.toFixed(1)}</td><td>${(p/30).toFixed(2)}</td></tr>`).join('');
   }
 
-  let all=S.lotes.flatMap(x=>x.pesos),
-      g=calc(all),
-      tv=S.lotes.reduce((s,x)=>s+value(x),0);
-
-  $('gl').textContent=S.lotes.length;
-  $('gn').textContent=g.n;
-  $('gkg').textContent=g.t.toFixed(1)+' kg';
-  $('gm').textContent=g.m.toFixed(1)+' kg';
-  $('ga').textContent=g.a.toFixed(2)+' @';
-  $('gma').textContent=g.ma.toFixed(2)+' @';
-  $('gv').textContent=money(tv);
-  $('gmv').textContent=money(g.n?tv/g.n:0);
-
-  $('lots').innerHTML=S.lotes.map(x=>{
-    let c=calc(x.pesos);
-    return `<tr><td>${x.nome}</td><td>${c.n}</td><td>${c.t.toFixed(1)}</td><td>${c.a.toFixed(2)}</td><td>${money(value(x))}</td></tr>`
-  }).join('');
-
+  let all=S.lotes.flatMap(x=>x.pesos),g=calc(all),tv=S.lotes.reduce((s,x)=>s+value(x),0);
+  $('gl').textContent=S.lotes.length;$('gn').textContent=g.n;$('gkg').textContent=g.t.toFixed(1)+' kg';$('gm').textContent=g.m.toFixed(1)+' kg';
+  $('ga').textContent=g.a.toFixed(2)+' @';$('gma').textContent=g.ma.toFixed(2)+' @';$('gv').textContent=money(tv);$('gmv').textContent=money(g.n?tv/g.n:0);
+  $('lots').innerHTML=S.lotes.map(x=>{let c=calc(x.pesos);return `<tr><td>${x.nome}</td><td>${c.n}</td><td>${c.t.toFixed(1)}</td><td>${c.a.toFixed(2)}</td><td>${money(value(x))}</td></tr>`}).join('');
   save()
 }
 
 function lotText(l){
-  let c=calc(l.pesos),v=value(l),
-      m=l.modo==='arroba'?money(l.precoArroba)+'/@':money(l.precoKg)+'/kg',
-      diff=l.anterior&&c.n?c.m-l.anterior:null;
-
+  let c=calc(l.pesos),v=value(l),m=l.modo==='arroba'?money(l.precoArroba)+'/@':money(l.precoKg)+'/kg',d=l.anterior&&c.n?c.m-l.anterior:null;
   return `PESAGEM DO CURRAL — ${l.nome}
 
 Animais: ${c.n}
@@ -302,7 +218,7 @@ Peso médio atual: ${c.m.toFixed(1)} kg
 Total: ${c.a.toFixed(2)} @
 Média: ${c.ma.toFixed(2)} @
 ${l.anterior?`Peso médio anterior: ${l.anterior.toFixed(1)} kg
-Diferença da média anterior: ${(diff>=0?'+':'')+diff.toFixed(1)} kg
+Diferença da média anterior: ${(d>=0?'+':'')+d.toFixed(1)} kg
 `:''}Negociação: ${m}
 Valor estimado: ${money(v)}
 Média por animal: ${money(c.n?v/c.n:0)}
@@ -310,12 +226,8 @@ Média por animal: ${money(c.n?v/c.n:0)}
 DETALHAMENTO
 ${l.pesos.map((p,i)=>`Animal ${i+1} — ${p.toFixed(1)} kg — ${(p/30).toFixed(2)} @`).join('\n')}`;
 }
-
 function allText(){
-  let all=S.lotes.flatMap(x=>x.pesos),
-      g=calc(all),
-      tv=S.lotes.reduce((s,x)=>s+value(x),0);
-
+  let all=S.lotes.flatMap(x=>x.pesos),g=calc(all),tv=S.lotes.reduce((s,x)=>s+value(x),0);
   return `RESUMO GERAL — PESAGEM DO CURRAL
 
 Lotes: ${S.lotes.length}
@@ -325,282 +237,215 @@ Peso médio: ${g.m.toFixed(1)} kg
 Arrobas: ${g.a.toFixed(2)} @
 Valor total: ${money(tv)}
 
-`+S.lotes.map(l=>{
-  let c=calc(l.pesos),
-      m=l.modo==='arroba'?money(l.precoArroba)+'/@':money(l.precoKg)+'/kg';
-  return `${l.nome}: ${c.n} animais | ${c.t.toFixed(1)} kg | ${c.a.toFixed(2)} @ | ${m} | ${money(value(l))}`
-}).join('\n');
+`+S.lotes.map(l=>{let c=calc(l.pesos),m=l.modo==='arroba'?money(l.precoArroba)+'/@':money(l.precoKg)+'/kg';return `${l.nome}: ${c.n} animais | ${c.t.toFixed(1)} kg | ${c.a.toFixed(2)} @ | ${m} | ${money(value(l))}`}).join('\n');
 }
-
-async function share(t){
-  if(navigator.share){
-    try{await navigator.share({text:t})}catch(e){}
-  }else{
-    navigator.clipboard.writeText(t);
-    alert('Relatório copiado.')
-  }
-}
+async function share(t){if(navigator.share){try{await navigator.share({text:t})}catch(e){}}else{navigator.clipboard.writeText(t);alert('Relatório copiado.')}}
 function shareLot(){let l=cur();if(l)share(lotText(l))}
 function shareAll(){share(allText())}
 
-/* PDF offline com múltiplas linhas e páginas */
-function cleanText(s){
-  return String(s)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g,'')
-    .replace(/[^\x20-\x7E]/g,'');
+/* PDF V4.2: WinAnsi, acentos e tabela */
+function winAnsiBytes(str){
+  const map={'€':128,'‚':130,'ƒ':131,'„':132,'…':133,'†':134,'‡':135,'ˆ':136,'‰':137,'Š':138,'‹':139,'Œ':140,'Ž':142,'‘':145,'’':146,'“':147,'”':148,'•':149,'–':150,'—':151,'˜':152,'™':153,'š':154,'›':155,'œ':156,'ž':158,'Ÿ':159};
+  let out='';
+  for(const ch of String(str)){
+    let code=ch.charCodeAt(0);
+    if(map[ch]!==undefined) code=map[ch];
+    if(code<32||code>255){out+='?';continue}
+    if(code===40||code===41||code===92) out+='\\'+String.fromCharCode(code);
+    else if(code<127) out+=String.fromCharCode(code);
+    else out+='\\'+code.toString(8).padStart(3,'0');
+  }
+  return out;
 }
-function pdfEsc(s){
-  return cleanText(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+function wrap(text,max=78){
+  let words=String(text).split(/\s+/),out=[],cur='';
+  words.forEach(w=>{let t=cur?cur+' '+w:w;if(t.length>max&&cur){out.push(cur);cur=w}else cur=t});if(cur)out.push(cur);return out;
 }
-function wrapText(text,max=88){
-  let words=cleanText(text).split(/\s+/),lines=[],cur='';
-  words.forEach(w=>{
-    let test=cur?cur+' '+w:w;
-    if(test.length>max&&cur){lines.push(cur);cur=w}else cur=test;
-  });
-  if(cur)lines.push(cur);
-  return lines;
-}
-function makePdf(title, sections){
-  const W=595,H=842,left=44,right=551,top=795,bottom=50;
-  let pages=[],page=[],y=top;
-
-  function newPage(){if(page.length)pages.push(page);page=[];y=top}
-  function add(text,size=10,bold=false,indent=0,after=0){
-    let max=size>=14?58:88;
-    wrapText(text,max).forEach(line=>{
-      if(y<bottom)newPage();
-      page.push({text:line,size,bold,x:left+indent,y});
+function buildPdf(title, blocks){
+  const W=595,H=842,L=46,R=549,TOP=792,BOT=52;
+  let pages=[],page=[],y=TOP;
+  const newPage=()=>{if(page.length)pages.push(page);page=[];y=TOP};
+  const text=(s,size=10,bold=false,x=L,after=0)=>{
+    let max=size>=15?58:78;
+    for(const line of wrap(s,max)){
+      if(y<BOT)newPage();
+      page.push({kind:'text',s:line,size,bold,x,y});
       y-=size+5;
-    });
+    }
     y-=after;
-  }
-  function rule(){
-    if(y<bottom+20)newPage();
-    page.push({rule:true,x1:left,x2:right,y});
-    y-=12;
-  }
+  };
+  const rule=()=>{
+    if(y<BOT+20)newPage();
+    page.push({kind:'rule',x1:L,x2:R,y});y-=11;
+  };
+  const box=(label,val)=>{
+    if(y<BOT+44)newPage();
+    page.push({kind:'box',x:L,y:y-30,w:R-L,h:34,label,val});
+    y-=43;
+  };
+  const tableHeader=()=>{
+    if(y<BOT+24)newPage();
+    page.push({kind:'thead',y});y-=20;
+  };
+  const tableRow=(a,b,c)=>{
+    if(y<BOT+18){newPage();tableHeader()}
+    page.push({kind:'trow',y,a,b,c});y-=17;
+  };
 
-  add(title,17,true,0,5);
-  add('Relatorio de Pesagem do Curral',11,false,0,3);
+  text(title,18,true,L,2);
+  text('Relatório de Pesagem do Curral',11,false,L,4);
   rule();
 
-  sections.forEach(s=>{
-    if(s.type==='heading'){add(s.text,12,true,0,2)}
-    else if(s.type==='rule'){rule()}
-    else if(s.type==='spacer'){y-=s.h||8}
-    else add(s.text,s.size||10,!!s.bold,s.indent||0,s.after||0);
-  });
+  for(const b of blocks){
+    if(b.type==='heading'){text(b.text,12,true,L,2)}
+    else if(b.type==='rule')rule();
+    else if(b.type==='space'){y-=b.h||8}
+    else if(b.type==='box')box(b.label,b.value);
+    else if(b.type==='thead')tableHeader();
+    else if(b.type==='trow')tableRow(b.a,b.b,b.c);
+    else text(b.text,b.size||10,!!b.bold,L,b.after||0);
+  }
   if(page.length)pages.push(page);
 
-  let objs=[null];
-  const push=o=>{objs.push(o);return objs.length-1};
-  const f1=push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
-  const f2=push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
+  let objs=[null],add=o=>{objs.push(o);return objs.length-1};
+  let f1=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+  let f2=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  let pids=[],cids=[];
 
-  let pageIds=[],contentIds=[];
   pages.forEach(pg=>{
-    let stream=[];
+    let s=[];
     pg.forEach(i=>{
-      if(i.rule){
-        stream.push(`${i.x1} ${i.y} m ${i.x2} ${i.y} l S`);
-      }else{
-        stream.push(`BT /${i.bold?'F2':'F1'} ${i.size} Tf ${i.x} ${i.y} Td (${pdfEsc(i.text)}) Tj ET`);
+      if(i.kind==='text'){
+        s.push(`BT /${i.bold?'F2':'F1'} ${i.size} Tf ${i.x} ${i.y} Td (${winAnsiBytes(i.s)}) Tj ET`);
+      }else if(i.kind==='rule'){
+        s.push(`0.75 w ${i.x1} ${i.y} m ${i.x2} ${i.y} l S`);
+      }else if(i.kind==='box'){
+        s.push(`0.94 g ${i.x} ${i.y} ${i.w} ${i.h} re f 0 g`);
+        s.push(`BT /F1 9 Tf ${i.x+10} ${i.y+21} Td (${winAnsiBytes(i.label)}) Tj ET`);
+        s.push(`BT /F2 14 Tf ${i.x+10} ${i.y+7} Td (${winAnsiBytes(i.val)}) Tj ET`);
+      }else if(i.kind==='thead'){
+        s.push(`0.90 g ${L} ${i.y-14} ${R-L} 18 re f 0 g`);
+        s.push(`BT /F2 9 Tf ${L+8} ${i.y-2} Td (Animal) Tj ET`);
+        s.push(`BT /F2 9 Tf ${L+245} ${i.y-2} Td (Peso \\(kg\\)) Tj ET`);
+        s.push(`BT /F2 9 Tf ${L+390} ${i.y-2} Td (Arrobas \\(@\\)) Tj ET`);
+      }else if(i.kind==='trow'){
+        s.push(`BT /F1 9 Tf ${L+8} ${i.y} Td (${winAnsiBytes(i.a)}) Tj ET`);
+        s.push(`BT /F1 9 Tf ${L+245} ${i.y} Td (${winAnsiBytes(i.b)}) Tj ET`);
+        s.push(`BT /F1 9 Tf ${L+390} ${i.y} Td (${winAnsiBytes(i.c)}) Tj ET`);
+        s.push(`0.90 G ${L} ${i.y-4} m ${R} ${i.y-4} l S 0 G`);
       }
     });
-    let st=stream.join('\n');
-    let cid=push(`<< /Length ${st.length} >>\nstream\n${st}\nendstream`);
-    contentIds.push(cid);
-    pageIds.push(push(''));
+    let st=s.join('\n'),cid=add(`<< /Length ${st.length} >>\nstream\n${st}\nendstream`);
+    cids.push(cid);pids.push(add(''));
   });
 
-  const pagesId=push('');
-  pageIds.forEach((pid,i)=>{
-    objs[pid]=`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 ${f1} 0 R /F2 ${f2} 0 R >> >> /Contents ${contentIds[i]} 0 R >>`;
+  let pagesId=add('');
+  pids.forEach((pid,i)=>{
+    objs[pid]=`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 ${f1} 0 R /F2 ${f2} 0 R >> >> /Contents ${cids[i]} 0 R >>`;
   });
-  objs[pagesId]=`<< /Type /Pages /Kids [${pageIds.map(i=>i+' 0 R').join(' ')}] /Count ${pageIds.length} >>`;
-  const catalog=push(`<< /Type /Catalog /Pages ${pagesId} 0 R >>`);
+  objs[pagesId]=`<< /Type /Pages /Kids [${pids.map(i=>i+' 0 R').join(' ')}] /Count ${pids.length} >>`;
+  let catalog=add(`<< /Type /Catalog /Pages ${pagesId} 0 R >>`);
 
-  let out='%PDF-1.4\n',offset=[0];
-  for(let i=1;i<objs.length;i++){
-    offset[i]=out.length;
-    out+=`${i} 0 obj\n${objs[i]}\nendobj\n`;
-  }
+  let out='%PDF-1.4\n',off=[0];
+  for(let i=1;i<objs.length;i++){off[i]=out.length;out+=`${i} 0 obj\n${objs[i]}\nendobj\n`}
   let xref=out.length;
   out+=`xref\n0 ${objs.length}\n0000000000 65535 f \n`;
-  for(let i=1;i<objs.length;i++){
-    out+=String(offset[i]).padStart(10,'0')+' 00000 n \n';
-  }
+  for(let i=1;i<objs.length;i++)out+=String(off[i]).padStart(10,'0')+' 00000 n \n';
   out+=`trailer\n<< /Size ${objs.length} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`;
   return new Blob([out],{type:'application/pdf'});
 }
 
-function lotPdfSections(l){
-  let c=calc(l.pesos),v=value(l),
-      m=l.modo==='arroba'?money(l.precoArroba)+' por arroba':money(l.precoKg)+' por kg',
+function lotBlocks(l){
+  let c=calc(l.pesos),v=value(l),d=l.anterior&&c.n?c.m-l.anterior:null,
       o=l.pesos.map((p,i)=>({p,i:i+1})).sort((a,b)=>a.p-b.p),
-      diff=l.anterior&&c.n?c.m-l.anterior:null;
+      forma=l.modo==='arroba'?`${money(l.precoArroba)} por arroba`:`${money(l.precoKg)} por kg`;
 
-  let sec=[
-    {type:'heading',text:'IDENTIFICACAO'},
+  let b=[
+    {type:'heading',text:'IDENTIFICAÇÃO'},
     {text:'Lote: '+l.nome},
-    {text:'Data do relatorio: '+new Date().toLocaleDateString('pt-BR')},
-    {type:'spacer',h:7},
+    {text:'Data do relatório: '+new Date().toLocaleDateString('pt-BR')},
+    {type:'space',h:6},
 
     {type:'heading',text:'RESUMO DA PESAGEM'},
+    {type:'box',label:'PESO TOTAL',value:c.t.toFixed(1)+' kg'},
+    {type:'box',label:'TOTAL DE ARROBAS',value:c.a.toFixed(2)+' @'},
     {text:`Quantidade de animais: ${c.n}`},
-    {text:`Peso total: ${c.t.toFixed(1)} kg`},
-    {text:`Peso medio atual: ${c.m.toFixed(1)} kg`},
-    {text:`Total de arrobas: ${c.a.toFixed(2)} @`},
-    {text:`Media de arrobas por animal: ${c.ma.toFixed(2)} @`}
+    {text:`Peso médio atual: ${c.m.toFixed(1)} kg`},
+    {text:`Média de arrobas por animal: ${c.ma.toFixed(2)} @`}
   ];
 
   if(l.anterior){
-    sec.push({text:`Peso medio anterior informado: ${l.anterior.toFixed(1)} kg`});
-    sec.push({text:`Diferenca da media anterior: ${(diff>=0?'+':'')+diff.toFixed(1)} kg`});
+    b.push({text:`Peso médio anterior informado: ${l.anterior.toFixed(1)} kg`});
+    b.push({text:`Diferença da média anterior: ${(d>=0?'+':'')+d.toFixed(1)} kg`});
   }
 
-  sec.push(
-    {type:'spacer',h:7},
+  b.push(
+    {type:'space',h:6},
     {type:'heading',text:'PESOS DE DESTAQUE'},
     {text:'2 menores: '+(o.slice(0,2).map(z=>`Animal ${z.i} - ${z.p.toFixed(1)} kg - ${(z.p/30).toFixed(2)} @`).join(' | ')||'-')},
     {text:'2 maiores: '+(o.slice(-2).reverse().map(z=>`Animal ${z.i} - ${z.p.toFixed(1)} kg - ${(z.p/30).toFixed(2)} @`).join(' | ')||'-')},
-    {type:'spacer',h:7},
 
-    {type:'heading',text:'NEGOCIACAO'},
-    {text:'Forma / preco: '+m},
-    {text:'Valor estimado do lote: '+money(v),bold:true},
-    {text:'Valor medio por animal: '+money(c.n?v/c.n:0)},
+    {type:'space',h:6},
+    {type:'heading',text:'NEGOCIAÇÃO'},
+    {text:'Forma / preço: '+forma},
+    {type:'box',label:'VALOR ESTIMADO DO LOTE',value:money(v)},
+    {text:'Valor médio por animal: '+money(c.n?v/c.n:0)},
     {text:'Equivalente por kg: '+money(c.t?v/c.t:0)},
     {text:'Equivalente por arroba: '+money(c.a?v/c.a:0)},
-    {type:'spacer',h:8},
 
+    {type:'space',h:8},
     {type:'heading',text:'DETALHAMENTO DOS ANIMAIS'},
-    {text:'Animal   Peso (kg)   Arrobas (@)',bold:true}
+    {type:'thead'}
   );
 
-  l.pesos.forEach((p,i)=>{
-    sec.push({text:`Animal ${String(i+1).padStart(3,' ')}   ${p.toFixed(1).padStart(8,' ')}   ${(p/30).toFixed(2).padStart(8,' ')}`});
-  });
-
-  sec.push(
-    {type:'spacer',h:10},
-    {type:'rule'},
-    {text:'Relatorio de pesagem para conferencia comercial.',size:9}
-  );
-  return sec;
+  l.pesos.forEach((p,i)=>b.push({type:'trow',a:'Animal '+(i+1),b:p.toFixed(1),c:(p/30).toFixed(2)}));
+  b.push({type:'space',h:8},{type:'rule'},{text:'Relatório de pesagem para conferência comercial.',size:9});
+  return b;
 }
 
-function allPdfSections(){
-  let all=S.lotes.flatMap(x=>x.pesos),
-      g=calc(all),
-      tv=S.lotes.reduce((s,x)=>s+value(x),0);
-
-  let sec=[
+function allBlocks(){
+  let all=S.lotes.flatMap(x=>x.pesos),g=calc(all),tv=S.lotes.reduce((s,x)=>s+value(x),0);
+  let b=[
     {type:'heading',text:'RESUMO CONSOLIDADO'},
-    {text:'Data do relatorio: '+new Date().toLocaleDateString('pt-BR')},
+    {text:'Data do relatório: '+new Date().toLocaleDateString('pt-BR')},
     {text:`Quantidade de lotes: ${S.lotes.length}`},
     {text:`Quantidade de animais: ${g.n}`},
-    {text:`Peso total: ${g.t.toFixed(1)} kg`},
-    {text:`Peso medio geral: ${g.m.toFixed(1)} kg`},
-    {text:`Total de arrobas: ${g.a.toFixed(2)} @`},
-    {text:`Media de arrobas: ${g.ma.toFixed(2)} @`},
-    {text:`Valor total estimado: ${money(tv)}`,bold:true},
-    {text:`Valor medio por animal: ${money(g.n?tv/g.n:0)}`},
-    {type:'spacer',h:8},
+    {type:'box',label:'PESO TOTAL',value:g.t.toFixed(1)+' kg'},
+    {type:'box',label:'TOTAL DE ARROBAS',value:g.a.toFixed(2)+' @'},
+    {type:'box',label:'VALOR TOTAL ESTIMADO',value:money(tv)},
+    {text:`Peso médio geral: ${g.m.toFixed(1)} kg`},
+    {text:`Média de arrobas: ${g.ma.toFixed(2)} @`},
+    {text:`Valor médio por animal: ${money(g.n?tv/g.n:0)}`},
+    {type:'space',h:8},
     {type:'heading',text:'LOTES'}
   ];
-
   S.lotes.forEach(l=>{
-    let c=calc(l.pesos),
-        m=l.modo==='arroba'?money(l.precoArroba)+'/@':money(l.precoKg)+'/kg';
-    sec.push({text:`${l.nome} | ${c.n} animais | ${c.t.toFixed(1)} kg | ${c.a.toFixed(2)} @ | ${m} | ${money(value(l))}`});
+    let c=calc(l.pesos),m=l.modo==='arroba'?money(l.precoArroba)+'/@':money(l.precoKg)+'/kg';
+    b.push({text:`${l.nome} | ${c.n} animais | ${c.t.toFixed(1)} kg | ${c.a.toFixed(2)} @ | ${m} | ${money(value(l))}`});
   });
-
-  sec.push(
-    {type:'spacer',h:10},
-    {type:'rule'},
-    {text:'Relatorio de pesagem para conferencia comercial.',size:9}
-  );
-  return sec;
+  b.push({type:'space',h:8},{type:'rule'},{text:'Relatório de pesagem para conferência comercial.',size:9});
+  return b;
 }
 
 async function sharePdf(blob,name,title){
-  const file=new File([blob],name,{type:'application/pdf'});
-  if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
-    try{await navigator.share({title,files:[file]});return}catch(e){}
+  let f=new File([blob],name,{type:'application/pdf'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})&&navigator.share){
+    try{await navigator.share({title,files:[f]});return}catch(e){}
   }
-  let a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=name;
-  a.click();
-  alert('PDF gerado. Se o compartilhamento direto nao abrir, use o arquivo baixado.');
+  let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+  alert('PDF gerado. Se o compartilhamento direto não abrir, use o arquivo baixado.')
 }
+function pdfLot(){let l=cur();if(l)sharePdf(buildPdf('PESAGEM DO CURRAL',lotBlocks(l)),'pesagem_'+l.nome.replace(/[^a-z0-9]/gi,'_')+'.pdf','Pesagem - '+l.nome)}
+function pdfAll(){sharePdf(buildPdf('PESAGEM DO CURRAL',allBlocks()),'pesagem_resumo_geral.pdf','Resumo Geral - Pesagem do Curral')}
 
-function pdfLot(){
-  let l=cur();
-  if(!l)return;
-  sharePdf(
-    makePdf('PESAGEM DO CURRAL',lotPdfSections(l)),
-    'pesagem_'+l.nome.replace(/[^a-z0-9]/gi,'_')+'.pdf',
-    'Pesagem - '+l.nome
-  )
-}
-function pdfAll(){
-  sharePdf(
-    makePdf('PESAGEM DO CURRAL',allPdfSections()),
-    'pesagem_resumo_geral.pdf',
-    'Resumo Geral - Pesagem do Curral'
-  )
-}
-
-function dl(data,name,type){
-  let a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([data],{type}));
-  a.download=name;
-  a.click()
-}
-
-function csv(){
-  let r=['Lote;Animal;Peso kg;Arrobas;Forma;Preco;Valor lote'];
-  S.lotes.forEach(l=>l.pesos.forEach((p,i)=>
-    r.push(`${l.nome};Animal ${i+1};${p};${(p/30).toFixed(2)};${l.modo};${l.modo==='arroba'?l.precoArroba:l.precoKg};${value(l).toFixed(2)}`)
-  ));
-  dl('\ufeff'+r.join('\n'),'pesagem_curral.csv','text/csv')
-}
-
-function backup(){
-  dl(JSON.stringify({version:'4.1',state:S},null,2),'backup_curral_v41.json','application/json')
-}
-
-function restore(f){
-  if(!f)return;
-  let r=new FileReader();
-  r.onload=()=>{
-    try{
-      let b=JSON.parse(r.result),st=b.state||b.S;
-      if(!st||!Array.isArray(st.lotes))throw 0;
-      if(confirm('Restaurar backup e substituir dados atuais?')){
-        S=st;save();render();alert('Backup restaurado.')
-      }
-    }catch(e){alert('Backup inválido.')}
-  };
-  r.readAsText(f)
-}
-
-function delLot(){
-  let l=cur();
-  if(l&&confirm('Excluir '+l.nome+'?')){
-    S.lotes=S.lotes.filter(x=>x.id!=l.id);
-    S.atual=null;save();render()
-  }
-}
+function dl(data,name,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()}
+function csv(){let r=['Lote;Animal;Peso kg;Arrobas;Forma;Preco;Valor lote'];S.lotes.forEach(l=>l.pesos.forEach((p,i)=>r.push(`${l.nome};Animal ${i+1};${p};${(p/30).toFixed(2)};${l.modo};${l.modo==='arroba'?l.precoArroba:l.precoKg};${value(l).toFixed(2)}`)));dl('\ufeff'+r.join('\n'),'pesagem_curral.csv','text/csv')}
+function backup(){dl(JSON.stringify({version:'4.2',state:S},null,2),'backup_curral_v42.json','application/json')}
+function restore(f){if(!f)return;let r=new FileReader;r.onload=()=>{try{let x=JSON.parse(r.result),st=x.state||x.S;if(!st||!Array.isArray(st.lotes))throw 0;if(confirm('Restaurar backup e substituir dados atuais?')){S=st;save();render();alert('Backup restaurado.')}}catch(e){alert('Backup inválido.')}};r.readAsText(f)}
+function delLot(){let l=cur();if(l&&confirm('Excluir '+l.nome+'?')){S.lotes=S.lotes.filter(x=>x.id!=l.id);S.atual=null;save();render()}}
 
 render();
-if('serviceWorker'in navigator){
-  addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js'))
-}
+if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js'));
 </script>
 </body>
 </html>
