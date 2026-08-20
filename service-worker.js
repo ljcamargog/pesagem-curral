@@ -1,3 +1,4 @@
+// V4.3 - atualização de ícone iPhone
 const C='curral-v42';
 const A=['./','index.html','manifest.json','icon-192.png','icon-512.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(A)))});

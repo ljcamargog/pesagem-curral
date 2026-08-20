@@ -1,13 +1,11 @@
-PESAGEM DO CURRAL V4.2
+PESAGEM DO CURRAL — V4.3
 
-MELHORIAS NO PDF:
-- Acentuação correta em títulos e textos.
-- Destaque visual para Peso Total, Total de Arrobas e Valor do Lote.
-- Tabela organizada: Animal | Peso (kg) | Arrobas (@).
-- Melhor leitura em várias páginas.
-- PDF geral também com destaques.
-- Mantém todos os lotes e dados da V4/V4.1, pois continua usando curralV4.
+Atualização focada exclusivamente no ícone do aplicativo no iPhone.
+- Novo ícone de gado.
+- Ícone específico Apple Touch 180x180.
+- Manifest atualizado.
+- Versionamento para evitar cache do ícone antigo.
+- Cálculos, lotes, armazenamento e PDF mantidos como na V4.2.
 
-NO GITHUB:
-Substitua os arquivos desta pasta no mesmo repositório.
-Depois aguarde o novo deployment e abra o app pelo Safari uma vez com internet.
+No GitHub, substitua TODOS os arquivos pelos desta pasta e faça Commit changes.
+Depois aguarde o deployment concluir. No iPhone, remova o atalho antigo e adicione novamente pelo Safari.
