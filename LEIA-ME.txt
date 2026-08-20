@@ -1,1 +1,13 @@
-V4: lotes, pesagem anterior, 2 menores/maiores, preço individual por lote em kg ou arroba, resumo geral, texto, PDF, CSV, backup/restauração e offline. Substitua os arquivos no GitHub.
+PESAGEM DO CURRAL V4.1
+
+CORRECOES:
+- PDF por lote agora organizado em secoes, linhas e varias paginas.
+- PDF geral organizado.
+- Diferenca da media anterior com sinal + ou - e descricao mais clara.
+- Menores e maiores apresentados de forma mais clara com poucos animais.
+- Mantem todos os recursos da V4.
+- Usa o mesmo armazenamento curralV4, portanto preserva os lotes e pesagens atuais.
+
+NO GITHUB:
+Substitua index.html, manifest.json, service-worker.js, icon-192.png e icon-512.png.
+Depois aguarde o novo deployment e abra pelo Safari uma vez com internet.
