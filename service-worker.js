@@ -1,5 +1,5 @@
-// V4.3 - atualização de ícone iPhone
-const C='curral-v44';
+// V4.4.1 - correção dos valores após finalizar a pesagem
+const C='curral-v441';
 const A=['./','index.html','manifest.json','icon-180.png','icon-192.png','icon-512.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(A)))});
 self.addEventListener('activate',e=>e.waitUntil(Promise.all([self.clients.claim(),caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==C).map(k=>caches.delete(k))))])));

@@ -191,8 +191,15 @@ const calc=p=>{
   let n=p.length,t=p.reduce((a,b)=>a+(+b||0),0);
   return {n,t,m:n?t/n:0,a:t/30,ma:n?t/30/n:0}
 };
-const value=l=>{
+const calcLote=l=>{
   let c=calc(l.pesos);
+  if(c.n)return c;
+  let h=ultimoHistorico(l);
+  if(h)return {n:+h.animais||0,t:+h.pesoTotal||0,m:+h.media||0,a:+h.arrobas||0,ma:+h.mediaArrobas||((+h.animais||0)?(+h.arrobas||0)/(+h.animais):0)};
+  return c;
+};
+const value=l=>{
+  let c=calcLote(l);
   return l.modo==='arroba'?c.a*(+l.precoArroba||0):c.t*(+l.precoKg||0)
 };
 function save(){localStorage.setItem('curralV4',JSON.stringify(S))}
@@ -256,14 +263,14 @@ function render(reset=true){
 
     if(reset){$('modo').value=l.modo;$('pKg').value=(+l.precoKg||0).toFixed(2);$('pA').value=(+l.precoArroba||0).toFixed(2);$('antEdit').value=l.anterior??''}
     $('kgBox').classList.toggle('hidden',$('modo').value!=='kg');$('aBox').classList.toggle('hidden',$('modo').value!=='arroba');
-    $('vl').textContent=money(v);$('vm').textContent=money(c.n?v/c.n:0);$('eqkg').textContent=money(c.t?v/c.t:0);$('eqa').textContent=money(c.a?v/c.a:0);
+    let cv=calcLote(l);$('vl').textContent=money(v);$('vm').textContent=money(cv.n?v/cv.n:0);$('eqkg').textContent=money(cv.t?v/cv.t:0);$('eqa').textContent=money(cv.a?v/cv.a:0);
     $('list').innerHTML=l.pesos.map((p,i)=>`<tr><td>Animal ${i+1}</td><td>${p.toFixed(1)}</td><td>${(p/30).toFixed(2)}</td></tr>`).join('');
   }
 
-  let all=S.lotes.flatMap(x=>x.pesos),g=calc(all),tv=S.lotes.reduce((s,x)=>s+value(x),0);
+  let cs=S.lotes.map(calcLote),g={n:cs.reduce((s,c)=>s+c.n,0),t:cs.reduce((s,c)=>s+c.t,0),a:cs.reduce((s,c)=>s+c.a,0)};g.m=g.n?g.t/g.n:0;g.ma=g.n?g.a/g.n:0;let tv=S.lotes.reduce((s,x)=>s+value(x),0);
   $('gl').textContent=S.lotes.length;$('gn').textContent=g.n;$('gkg').textContent=g.t.toFixed(1)+' kg';$('gm').textContent=g.m.toFixed(1)+' kg';
   $('ga').textContent=g.a.toFixed(2)+' @';$('gma').textContent=g.ma.toFixed(2)+' @';$('gv').textContent=money(tv);$('gmv').textContent=money(g.n?tv/g.n:0);
-  $('lots').innerHTML=S.lotes.map(x=>{let c=calc(x.pesos);return `<tr><td>${x.nome}</td><td>${c.n}</td><td>${c.t.toFixed(1)}</td><td>${c.a.toFixed(2)}</td><td>${money(value(x))}</td></tr>`}).join('');
+  $('lots').innerHTML=S.lotes.map(x=>{let c=calcLote(x);return `<tr><td>${x.nome}</td><td>${c.n}</td><td>${c.t.toFixed(1)}</td><td>${c.a.toFixed(2)}</td><td>${money(value(x))}</td></tr>`}).join('');
   save()
 }
 
@@ -289,7 +296,7 @@ DETALHAMENTO
 ${l.pesos.map((p,i)=>`Animal ${i+1} — ${p.toFixed(1)} kg — ${(p/30).toFixed(2)} @`).join('\n')}`;
 }
 function allText(){
-  let all=S.lotes.flatMap(x=>x.pesos),g=calc(all),tv=S.lotes.reduce((s,x)=>s+value(x),0);
+  let cs=S.lotes.map(calcLote),g={n:cs.reduce((s,c)=>s+c.n,0),t:cs.reduce((s,c)=>s+c.t,0),a:cs.reduce((s,c)=>s+c.a,0)};g.m=g.n?g.t/g.n:0;g.ma=g.n?g.a/g.n:0;let tv=S.lotes.reduce((s,x)=>s+value(x),0);
   return `RESUMO GERAL — PESAGEM DO CURRAL
 
 Lotes: ${S.lotes.length}
@@ -466,7 +473,7 @@ function lotBlocks(l){
 }
 
 function allBlocks(){
-  let all=S.lotes.flatMap(x=>x.pesos),g=calc(all),tv=S.lotes.reduce((s,x)=>s+value(x),0);
+  let cs=S.lotes.map(calcLote),g={n:cs.reduce((s,c)=>s+c.n,0),t:cs.reduce((s,c)=>s+c.t,0),a:cs.reduce((s,c)=>s+c.a,0)};g.m=g.n?g.t/g.n:0;g.ma=g.n?g.a/g.n:0;let tv=S.lotes.reduce((s,x)=>s+value(x),0);
   let b=[
     {type:'heading',text:'RESUMO CONSOLIDADO'},
     {text:'Data do relatório: '+new Date().toLocaleDateString('pt-BR')},
