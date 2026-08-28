@@ -1,17 +1,7 @@
-PESAGEM DO CURRAL — V4.5.1
-
-CORREÇÃO:
-- Corrigida a janela "Ver Histórico".
-- A janela agora fica realmente fechada até clicar no botão VER.
-- O botão FECHAR agora fecha a janela corretamente.
-- Ao clicar em VER HISTÓRICO, o nome do lote e os registros são carregados.
-- Se o lote ainda não tiver histórico, aparece uma mensagem informando isso.
-- Nenhum cálculo, lote, pesagem, valor ou histórico foi removido.
-- Mantém todas as melhorias da V4.5.
-
-IMPORTANTE:
-Continua usando o mesmo armazenamento curralV4, preservando os dados atuais.
-
-ATUALIZAÇÃO:
-Envie todos os arquivos ao mesmo repositório GitHub, faça Commit changes,
-aguarde o GitHub Pages ficar verde e teste primeiro o botão VER HISTÓRICO e FECHAR.
+PESAGEM DO CURRAL — V4.5.2
+- Histórico e evolução removido da tela principal.
+- Resumo da evolução movido para o topo de VER HISTÓRICO.
+- Exibe última pesagem, quantidade de pesagens, médias anterior/atual,
+  variação média, dias entre pesagens, GMD e quantidade de animais.
+- Mantém os registros detalhados por data logo abaixo.
+- Mantém o armazenamento curralV4 e os dados existentes.

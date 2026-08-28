@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f4e78">
-<link rel="manifest" href="manifest.json?v=451">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=451">
+<link rel="manifest" href="manifest.json?v=452">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=452">
 <title>Pesagem Curral</title>
 <style>
 body{font-family:Arial;margin:0;background:#f3f5f7;color:#17202a}
@@ -68,6 +68,14 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 3px;b
 /* V4.5.1 — correção da abertura/fechamento da janela de histórico */
 .hist-overlay.hidden{display:none!important}
 
+
+.hist-summary{background:#fff;border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:0 2px 8px #0001}
+.hist-summary h3{margin:0 0 10px;font-size:18px}
+.hist-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.hist-summary-grid .m{padding:8px}
+.hist-summary-grid .m b{font-size:17px}
+.hist-highlight{margin-top:9px;background:#eaf2f8;border-radius:10px;padding:10px 12px;font-weight:800;font-size:16px;color:#173f63}
+
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pesagem Curral">
@@ -105,24 +113,6 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 3px;b
 <div class="m"><small>2 maiores pesos</small><b id="maxs">—</b></div>
 </div>
 <button class="gray" onclick="undo()">DESFAZER ÚLTIMA PESAGEM</button>
-</div>
-
-<div id="histCard" class="c hidden">
-<h2>Histórico e evolução</h2>
-<div class="g">
-<div class="m"><small>Última pesagem salva</small><b id="hData">—</b></div>
-<div class="m"><small>Média anterior salva</small><b id="hMedia">—</b></div>
-<div class="m"><small>Variação média atual</small><b id="hGanho">—</b></div>
-<div class="m"><small>Dias desde a última</small><b id="hDias">—</b></div>
-<div class="m"><small>GMD do lote</small><b id="hGmd">—</b></div>
-<div class="m"><small>Pesagens no histórico</small><b id="hQtd">0</b></div>
-</div>
-<button class="green" onclick="finalizarPesagem()">FINALIZAR PESAGEM E SALVAR NO HISTÓRICO</button>
-<p class="note">Ao finalizar, a pesagem atual fica guardada com data e hora e o lote fica pronto para uma nova pesagem. O GMD será calculado entre as pesagens.</p>
-<div id="histTabelaBox" class="hidden">
-<h3>Pesagens anteriores</h3>
-<table><thead><tr><th>Data</th><th>Animais</th><th>Média kg</th><th>GMD</th></tr></thead><tbody id="histList"></tbody></table>
-</div>
 </div>
 
 <div id="valCard" class="c hidden">
@@ -330,14 +320,14 @@ function render(reset=true){
     $('mins').textContent=extremosText(o,true);$('maxs').textContent=extremosText(o,false);
 
     let ev=evolucaoAtual(l),ult=ev.ult;
-    $('hData').textContent=ult?dataBR(ult.data):'—';
+    document.getElementById('hData')&&$('hData').textContent=ult?dataBR(ult.data):'—';
     $('hMedia').textContent=ult?ult.media.toFixed(1)+' kg':'—';
     $('hGanho').textContent=ev.ganho!==null?(ev.ganho>=0?'+':'')+ev.ganho.toFixed(1)+' kg/animal':'—';
     $('hDias').textContent=ev.dias!==null?ev.dias+' dia'+(ev.dias===1?'':'s'):'—';
-    $('hGmd').textContent=ev.gmd!==null?(ev.gmd>=0?'+':'')+ev.gmd.toFixed(3)+' kg/dia':'—';
+    document.getElementById('hGmd')&&$('hGmd').textContent=ev.gmd!==null?(ev.gmd>=0?'+':'')+ev.gmd.toFixed(3)+' kg/dia':'—';
     $('hQtd').textContent=(l.historico||[]).length;
     $('histTabelaBox').classList.toggle('hidden',!(l.historico&&l.historico.length));
-    $('histList').innerHTML=(l.historico||[]).slice().reverse().map((h,idx)=>`<tr><td>${dataBR(h.data)}</td><td>${h.animais}</td><td>${Number(h.media).toFixed(1)}</td><td>${h.gmd===null||h.gmd===undefined?'—':(h.gmd>=0?'+':'')+Number(h.gmd).toFixed(3)}</td></tr>`).join('');
+    document.getElementById('histList')&&$('histList').innerHTML=(l.historico||[]).slice().reverse().map((h,idx)=>`<tr><td>${dataBR(h.data)}</td><td>${h.animais}</td><td>${Number(h.media).toFixed(1)}</td><td>${h.gmd===null||h.gmd===undefined?'—':(h.gmd>=0?'+':'')+Number(h.gmd).toFixed(3)}</td></tr>`).join('');
 
     if(reset){$('modo').value=l.modo;$('pKg').value=(+l.precoKg||0).toFixed(2);$('pA').value=(+l.precoArroba||0).toFixed(2);$('antEdit').value=l.anterior??''}
     $('kgBox').classList.toggle('hidden',$('modo').value!=='kg');$('aBox').classList.toggle('hidden',$('modo').value!=='arroba');
@@ -377,10 +367,31 @@ function abrirHistoricoLote(id){
   if(!l)return;
   $('histModalTitle').textContent='Histórico — '+l.nome;
   let hs=(l.historico||[]).slice().reverse();
+  let histOriginal=(l.historico||[]);
+  let atual=histOriginal.length?histOriginal[histOriginal.length-1]:null;
+  let anterior=histOriginal.length>1?histOriginal[histOriginal.length-2]:null;
+  let mediaAtual=atual?Number(atual.media||0):0;
+  let mediaAnterior=anterior?Number(anterior.media||0):null;
+  let variacao=mediaAnterior===null?null:mediaAtual-mediaAnterior;
+  let dias=atual&&atual.diasDesdeAnterior!=null?Number(atual.diasDesdeAnterior):null;
+  let gmd=atual&&atual.gmd!=null?Number(atual.gmd):null;
+  let resumo=`<div class="hist-summary"><h3>Resumo da evolução</h3>
+    <div class="hist-summary-grid">
+      <div class="m"><small>Última pesagem</small><b>${atual?dataBR(atual.data):'—'}</b></div>
+      <div class="m"><small>Pesagens realizadas</small><b>${histOriginal.length}</b></div>
+      <div class="m"><small>Média anterior</small><b>${mediaAnterior===null?'—':mediaAnterior.toFixed(1)+' kg'}</b></div>
+      <div class="m"><small>Média atual</small><b>${atual?mediaAtual.toFixed(1)+' kg':'—'}</b></div>
+      <div class="m"><small>Variação média</small><b>${variacao===null?'—':(variacao>=0?'+':'')+variacao.toFixed(1)+' kg'}</b></div>
+      <div class="m"><small>Dias entre pesagens</small><b>${dias===null?'—':dias+' dias'}</b></div>
+      <div class="m"><small>GMD do lote</small><b>${gmd===null?'—':(gmd>=0?'+':'')+gmd.toFixed(3)+' kg/dia'}</b></div>
+      <div class="m"><small>Última quantidade</small><b>${atual?(atual.animais||0)+' animais':'—'}</b></div>
+    </div>
+    ${variacao===null?'':`<div class="hist-highlight">Evolução média: ${variacao>=0?'+':''}${variacao.toFixed(1)} kg/animal${gmd===null?'':' • GMD '+(gmd>=0?'+':'')+gmd.toFixed(3)+' kg/dia'}</div>`}
+  </div>`;
   if(!hs.length){
-    $('histModalBody').innerHTML='<div class="hist-entry"><b>Ainda não há pesagens finalizadas neste lote.</b></div>';
+    $('histModalBody').innerHTML=resumo+'<div class="hist-entry"><b>Ainda não há pesagens finalizadas neste lote.</b></div>';
   }else{
-    $('histModalBody').innerHTML=hs.map((h,revIdx)=>{
+    $('histModalBody').innerHTML=resumo+hs.map((h,revIdx)=>{
       let realIdx=(l.historico.length-1)-revIdx;
       let val=histValor(h);
       let mediaAnimal=(+h.animais||0)?val/(+h.animais):0;
