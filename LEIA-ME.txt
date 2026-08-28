@@ -1,7 +1,7 @@
-PESAGEM DO CURRAL — V4.5.2
-- Histórico e evolução removido da tela principal.
-- Resumo da evolução movido para o topo de VER HISTÓRICO.
-- Exibe última pesagem, quantidade de pesagens, médias anterior/atual,
-  variação média, dias entre pesagens, GMD e quantidade de animais.
-- Mantém os registros detalhados por data logo abaixo.
-- Mantém o armazenamento curralV4 e os dados existentes.
+PESAGEM DO CURRAL — V4.5.3
+- Correção segura baseada na V4.5.1 funcional.
+- Mantidas todas as funções.
+- O resumo da evolução foi movido para VER HISTÓRICO.
+- O botão FINALIZAR PESAGEM permanece na tela principal.
+- Dados continuam no mesmo armazenamento curralV4.
+- JavaScript validado antes do empacotamento.
