@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f4e78">
-<link rel="manifest" href="manifest.json?v=453">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=453">
+<link rel="manifest" href="manifest.json?v=454">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=454">
 <title>Pesagem Curral</title>
 <style>
 body{font-family:Arial;margin:0;background:#f3f5f7;color:#17202a}
@@ -75,6 +75,12 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 3px;b
 .hist-summary-grid .m{padding:8px}
 .hist-summary-grid .m b{font-size:17px}
 .hist-highlight{margin-top:9px;background:#eaf2f8;border-radius:10px;padding:10px 12px;font-weight:800;font-size:16px;color:#173f63}
+
+
+/* V4.5.4 — compartilhamento de pesagens finalizadas */
+.hist-share-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.hist-share-row button{margin:0;padding:10px 7px;font-size:12px;line-height:1.15;min-height:46px}
+@media(max-width:420px){.hist-share-row button{font-size:11px}}
 
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -414,6 +420,10 @@ function abrirHistoricoLote(id){
           <table><thead><tr><th>Animal</th><th>kg</th><th>@</th></tr></thead>
           <tbody>${pesos.map((p,i)=>`<tr><td>Animal ${i+1}</td><td>${Number(p).toFixed(1)}</td><td>${(Number(p)/30).toFixed(2)}</td></tr>`).join('')}</tbody></table>
         </div>`:`<p class="note">Esta pesagem foi salva em uma versão anterior e não possui os pesos individuais arquivados.</p>`}
+        <div class="hist-share-row">
+          <button class="blue" onclick="compartilharHistoricoTexto(${id},${realIdx})">COMPARTILHAR RESUMO</button>
+          <button class="gold" onclick="compartilharHistoricoPdf(${id},${realIdx})">COMPARTILHAR PDF</button>
+        </div>
       </div>`;
     }).join('');
   }
@@ -427,6 +437,48 @@ function fecharHistoricoLote(){
 function toggleDetalhesHistorico(id){
   let el=$(id);
   if(el)el.classList.toggle('hidden');
+}
+
+function historicoText(l,h){
+  let val=histValor(h), n=+h.animais||0, mediaAnimal=n?val/n:0;
+  let gmd=h.gmd==null?'—':(h.gmd>=0?'+':'')+Number(h.gmd).toFixed(3)+' kg/dia';
+  let variacao=h.ganhoMedio==null?'—':(h.ganhoMedio>=0?'+':'')+Number(h.ganhoMedio).toFixed(1)+' kg';
+  let pesos=Array.isArray(h.pesos)?h.pesos:[];
+  return `PESAGEM FINALIZADA — ${l.nome}\n\nData: ${dataBR(h.data)}\nAnimais: ${n}\nPeso total: ${Number(h.pesoTotal||0).toFixed(1)} kg\nPeso médio: ${Number(h.media||0).toFixed(1)} kg\nTotal de arrobas: ${Number(h.arrobas||0).toFixed(2)} @\nMédia de arrobas: ${Number(h.mediaArrobas||0).toFixed(2)} @\nGMD: ${gmd}\nVariação média: ${variacao}\nPreço daquela data: ${histPrecoTexto(h)}\nValor do lote: ${money(val)}\nMédia por animal: ${money(mediaAnimal)}${pesos.length?'\n\nPESOS DOS ANIMAIS\n'+pesos.map((p,i)=>`Animal ${i+1}: ${Number(p).toFixed(1)} kg — ${(Number(p)/30).toFixed(2)} @`).join('\n'):''}`;
+}
+function compartilharHistoricoTexto(id,idx){
+  let l=S.lotes.find(x=>x.id==id); if(!l)return;
+  let h=(l.historico||[])[idx]; if(!h)return;
+  share(historicoText(l,h));
+}
+function historicoBlocks(l,h){
+  let val=histValor(h),n=+h.animais||0,mediaAnimal=n?val/n:0,pesos=Array.isArray(h.pesos)?h.pesos:[];
+  let b=[
+    {type:'heading',text:'PESAGEM FINALIZADA'},
+    {text:'Lote: '+l.nome},{text:'Data da pesagem: '+dataBR(h.data)},
+    {type:'box',label:'PESO TOTAL',value:Number(h.pesoTotal||0).toFixed(1)+' kg'},
+    {type:'box',label:'PESO MÉDIO',value:Number(h.media||0).toFixed(1)+' kg'},
+    {text:'Quantidade de animais: '+n},
+    {text:'Total de arrobas: '+Number(h.arrobas||0).toFixed(2)+' @'},
+    {text:'Média de arrobas: '+Number(h.mediaArrobas||0).toFixed(2)+' @'},
+    {text:'Preço daquela data: '+histPrecoTexto(h)},
+    {type:'box',label:'VALOR DO LOTE',value:money(val)},
+    {text:'Média por animal: '+money(mediaAnimal)},
+    {text:'Variação média: '+(h.ganhoMedio==null?'—':(h.ganhoMedio>=0?'+':'')+Number(h.ganhoMedio).toFixed(1)+' kg')},
+    {text:'GMD: '+(h.gmd==null?'—':(h.gmd>=0?'+':'')+Number(h.gmd).toFixed(3)+' kg/dia')}
+  ];
+  if(pesos.length){
+    b.push({type:'space',h:8},{type:'heading',text:'PESOS DOS ANIMAIS'},{type:'thead'});
+    pesos.forEach((p,i)=>b.push({type:'trow',a:'Animal '+(i+1),b:Number(p).toFixed(1),c:(Number(p)/30).toFixed(2)}));
+  }else b.push({type:'space',h:8},{text:'Pesos individuais não disponíveis nesta pesagem antiga.',size:9});
+  b.push({type:'space',h:8},{type:'rule'},{text:'Histórico de pesagem do curral.',size:9});
+  return b;
+}
+function compartilharHistoricoPdf(id,idx){
+  let l=S.lotes.find(x=>x.id==id); if(!l)return;
+  let h=(l.historico||[])[idx]; if(!h)return;
+  let nome='pesagem_'+l.nome.replace(/[^a-z0-9]/gi,'_')+'_'+dataBR(h.data).replace(/\//g,'-')+'.pdf';
+  sharePdf(buildPdf('PESAGEM DO CURRAL',historicoBlocks(l,h)),nome,'Pesagem '+dataBR(h.data)+' - '+l.nome);
 }
 
 function lotText(l){

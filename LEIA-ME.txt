@@ -1,7 +1,10 @@
-PESAGEM DO CURRAL — V4.5.3
-- Correção segura baseada na V4.5.1 funcional.
-- Mantidas todas as funções.
-- O resumo da evolução foi movido para VER HISTÓRICO.
-- O botão FINALIZAR PESAGEM permanece na tela principal.
-- Dados continuam no mesmo armazenamento curralV4.
+PESAGEM DO CURRAL — V4.5.4
+
+NOVIDADE:
+- Cada pesagem finalizada no histórico agora pode ser compartilhada novamente.
+- Botão COMPARTILHAR RESUMO: envia os dados daquela pesagem em texto.
+- Botão COMPARTILHAR PDF: gera PDF específico daquela pesagem.
+- Quando disponíveis, os pesos individuais também entram no resumo/PDF.
+- Pesagens antigas sem pesos individuais continuam compartilháveis com médias e totais.
+- Mantidas todas as funções e o armazenamento curralV4 da V4.5.3.
 - JavaScript validado antes do empacotamento.
