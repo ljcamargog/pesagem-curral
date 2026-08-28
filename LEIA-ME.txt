@@ -1,23 +1,17 @@
-PESAGEM DO CURRAL — V4.5
+PESAGEM DO CURRAL — V4.5.1
 
-MELHORIAS DESTA VERSÃO:
-- Peso digitado na Pesagem Rápida maior, centralizado e em negrito.
-- Botões Compartilhar Texto e Compartilhar PDF lado a lado.
-- Botões do Resumo Geral menores e mais compactos.
-- Em Lotes Registrados, cada lote ganhou o botão VER HISTÓRICO.
-- Cada nova pesagem finalizada passa a guardar também:
-  data, animais, peso total, média, arrobas, preço usado, forma de negociação,
-  valor do lote, média por animal, GMD e os pesos individuais.
-- O histórico antigo continua preservado.
-- Registros antigos que não tinham pesos individuais continuam visíveis,
-  apenas sem a lista detalhada dos animais.
-- Histórico completo pode ser aberto sem poluir a tela principal.
-- CSV e backup continuam disponíveis e o CSV passa a levar mais dados do histórico.
+CORREÇÃO:
+- Corrigida a janela "Ver Histórico".
+- A janela agora fica realmente fechada até clicar no botão VER.
+- O botão FECHAR agora fecha a janela corretamente.
+- Ao clicar em VER HISTÓRICO, o nome do lote e os registros são carregados.
+- Se o lote ainda não tiver histórico, aparece uma mensagem informando isso.
+- Nenhum cálculo, lote, pesagem, valor ou histórico foi removido.
+- Mantém todas as melhorias da V4.5.
 
 IMPORTANTE:
-Esta versão continua usando o armazenamento 'curralV4', portanto mantém
-os lotes, pesagens e histórico já existentes no aparelho.
+Continua usando o mesmo armazenamento curralV4, preservando os dados atuais.
 
 ATUALIZAÇÃO:
-Envie todos os arquivos ao mesmo repositório do GitHub, faça o commit,
-aguarde o GitHub Pages ficar verde e teste primeiro com um lote fictício.
+Envie todos os arquivos ao mesmo repositório GitHub, faça Commit changes,
+aguarde o GitHub Pages ficar verde e teste primeiro o botão VER HISTÓRICO e FECHAR.
