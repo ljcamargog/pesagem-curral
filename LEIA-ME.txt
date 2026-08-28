@@ -1,11 +1,15 @@
-PESAGEM DO CURRAL — V4.3
+PESAGEM DO CURRAL — V4.4
 
-Atualização focada exclusivamente no ícone do aplicativo no iPhone.
-- Novo ícone de gado.
-- Ícone específico Apple Touch 180x180.
-- Manifest atualizado.
-- Versionamento para evitar cache do ícone antigo.
-- Cálculos, lotes, armazenamento e PDF mantidos como na V4.2.
+NOVIDADE PRINCIPAL: HISTÓRICO AUTOMÁTICO + GMD
+- Mantém a pesagem rápida da versão anterior.
+- Novo botão: FINALIZAR PESAGEM E SALVAR NO HISTÓRICO.
+- Cada rodada finalizada guarda data, quantidade, peso total, média e arrobas.
+- Na próxima rodada do mesmo lote, calcula variação média, dias transcorridos e GMD (kg/dia).
+- Histórico fica visível dentro do lote.
+- CSV passa a incluir também o histórico.
+- Backup continua completo e compatível com os dados antigos.
+- Usa a mesma chave curralV4, preservando lotes e dados da V4.3.
+- Inclui o novo ícone premium preparado para o aplicativo.
 
-No GitHub, substitua TODOS os arquivos pelos desta pasta e faça Commit changes.
-Depois aguarde o deployment concluir. No iPhone, remova o atalho antigo e adicione novamente pelo Safari.
+IMPORTANTE:
+A V4.3 continua sendo o backup estável. Publique a V4.4 somente quando quiser testar esta primeira melhoria.

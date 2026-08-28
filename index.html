@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f4e78">
-<link rel="manifest" href="manifest.json?v=43">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=43">
+<link rel="manifest" href="manifest.json?v=44">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=44">
 <title>Pesagem Curral</title>
 <style>
 body{font-family:Arial;margin:0;background:#f3f5f7;color:#17202a}
@@ -60,6 +60,24 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 3px;b
 <div class="m"><small>2 maiores pesos</small><b id="maxs">—</b></div>
 </div>
 <button class="gray" onclick="undo()">DESFAZER ÚLTIMA PESAGEM</button>
+</div>
+
+<div id="histCard" class="c hidden">
+<h2>Histórico e evolução</h2>
+<div class="g">
+<div class="m"><small>Última pesagem salva</small><b id="hData">—</b></div>
+<div class="m"><small>Média anterior salva</small><b id="hMedia">—</b></div>
+<div class="m"><small>Variação média atual</small><b id="hGanho">—</b></div>
+<div class="m"><small>Dias desde a última</small><b id="hDias">—</b></div>
+<div class="m"><small>GMD do lote</small><b id="hGmd">—</b></div>
+<div class="m"><small>Pesagens no histórico</small><b id="hQtd">0</b></div>
+</div>
+<button class="green" onclick="finalizarPesagem()">FINALIZAR PESAGEM E SALVAR NO HISTÓRICO</button>
+<p class="note">Ao finalizar, a pesagem atual fica guardada com data e hora e o lote fica pronto para uma nova pesagem. O GMD será calculado entre as pesagens.</p>
+<div id="histTabelaBox" class="hidden">
+<h3>Pesagens anteriores</h3>
+<table><thead><tr><th>Data</th><th>Animais</th><th>Média kg</th><th>GMD</th></tr></thead><tbody id="histList"></tbody></table>
+</div>
 </div>
 
 <div id="valCard" class="c hidden">
@@ -157,6 +175,15 @@ function migrate(){
 }
 migrate();
 
+function normalizeV44(){
+  S.version=4.4;
+  (S.lotes||[]).forEach(l=>{
+    if(!Array.isArray(l.historico)) l.historico=[];
+    if(l.sessaoInicio===undefined) l.sessaoInicio=null;
+  });
+}
+normalizeV44();
+
 const $=id=>document.getElementById(id);
 const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const cur=()=>S.lotes.find(x=>x.id==S.atual);
@@ -172,21 +199,41 @@ function save(){localStorage.setItem('curralV4',JSON.stringify(S))}
 function newLot(){
   let nm=$('nome').value.trim(); if(!nm)return alert('Digite o nome do lote.');
   let id=Date.now(),a=parseFloat($('antNovo').value);
-  S.lotes.push({id,nome:nm,anterior:isNaN(a)?null:a,pesos:[],modo:'kg',
+  S.lotes.push({id,nome:nm,anterior:isNaN(a)?null:a,pesos:[],historico:[],sessaoInicio:null,modo:'kg',
     precoKg:+(localStorage.getItem('precoKgCurral')||10.67),
     precoArroba:+(localStorage.getItem('precoArrobaCurral')||320)});
   S.atual=id;$('nome').value='';$('antNovo').value='';save();render();$('peso').focus()
 }
 function selectLot(v){S.atual=v?+v:null;save();render()}
-function add(){let l=cur(),p=parseFloat($('peso').value);if(!l)return alert('Crie ou selecione um lote.');if(!p||p<=0)return alert('Digite um peso válido.');l.pesos.push(p);$('peso').value='';save();render();$('peso').focus()}
+function add(){let l=cur(),p=parseFloat($('peso').value);if(!l)return alert('Crie ou selecione um lote.');if(!p||p<=0)return alert('Digite um peso válido.');if(!l.sessaoInicio)l.sessaoInicio=new Date().toISOString();l.pesos.push(p);$('peso').value='';save();render();$('peso').focus()}
 function undo(){let l=cur();if(l&&l.pesos.length){l.pesos.pop();save();render()}}
 function config(){let l=cur();if(!l)return;l.modo=$('modo').value;l.precoKg=+$('pKg').value||0;l.precoArroba=+$('pA').value||0;let a=parseFloat($('antEdit').value);l.anterior=isNaN(a)?null:a;localStorage.setItem('precoKgCurral',l.precoKg||10.67);localStorage.setItem('precoArrobaCurral',l.precoArroba||320);save();render(false)}
 function extremosText(o,menor=true){if(o.length===0)return '—';if(o.length===1)return `A${o[0].i} ${(o[0].p/30).toFixed(2)}@`;let arr=menor?o.slice(0,2):o.slice(-2).reverse();return arr.map(z=>'A'+z.i+' '+(z.p/30).toFixed(2)+'@').join(' / ')}
 
+function dataBR(iso){if(!iso)return '—';let d=new Date(iso);return d.toLocaleDateString('pt-BR')}
+function diasEntre(a,b){if(!a||!b)return null;let da=new Date(a),db=new Date(b);da.setHours(0,0,0,0);db.setHours(0,0,0,0);return Math.round((db-da)/86400000)}
+function ultimoHistorico(l){return l&&Array.isArray(l.historico)&&l.historico.length?l.historico[l.historico.length-1]:null}
+function evolucaoAtual(l){
+  let ult=ultimoHistorico(l),c=calc(l.pesos);
+  if(!ult||!c.n)return {ult,dias:null,ganho:null,gmd:null};
+  let agora=l.sessaoInicio||new Date().toISOString(),dias=diasEntre(ult.data,agora),ganho=c.m-ult.media;
+  return {ult,dias,ganho,gmd:dias&&dias>0?ganho/dias:null};
+}
+function finalizarPesagem(){
+  let l=cur();if(!l)return;let c=calc(l.pesos);
+  if(!c.n)return alert('Não há pesos registrados para salvar no histórico.');
+  if(!confirm(`Finalizar a pesagem atual de ${c.n} animais e salvar no histórico do lote "${l.nome}"?`))return;
+  let anterior=ultimoHistorico(l),data=new Date().toISOString(),dias=anterior?diasEntre(anterior.data,data):null,ganho=anterior?c.m-anterior.media:null,gmd=(dias&&dias>0)?ganho/dias:null;
+  l.historico.push({data,animais:c.n,pesoTotal:c.t,media:c.m,arrobas:c.a,mediaArrobas:c.ma,valor:value(l),modo:l.modo,preco:l.modo==='arroba'?l.precoArroba:l.precoKg,diasDesdeAnterior:dias,ganhoMedio:ganho,gmd});
+  l.anterior=c.m;
+  l.pesos=[];l.sessaoInicio=null;
+  save();render();alert('Pesagem salva no histórico. O lote está pronto para uma nova pesagem.');
+}
+
 function render(reset=true){
   let l=cur();
   $('sel').innerHTML='<option value="">Selecione um lote</option>'+S.lotes.map(x=>`<option value="${x.id}" ${l&&x.id==l.id?'selected':''}>${x.nome}</option>`).join('');
-  ['pesoCard','resCard','valCard','listCard'].forEach(id=>$(id).classList.toggle('hidden',!l));
+  ['pesoCard','resCard','histCard','valCard','listCard'].forEach(id=>$(id).classList.toggle('hidden',!l));
   $('badge').classList.toggle('hidden',!l);
 
   if(l){
@@ -196,6 +243,16 @@ function render(reset=true){
     $('ar').textContent=c.a.toFixed(2)+' @';$('ma').textContent=c.ma.toFixed(2)+' @';
     if(l.anterior&&c.n){let d=c.m-l.anterior;$('ganho').textContent=(d>=0?'+':'')+d.toFixed(1)+' kg'}else $('ganho').textContent='—';
     $('mins').textContent=extremosText(o,true);$('maxs').textContent=extremosText(o,false);
+
+    let ev=evolucaoAtual(l),ult=ev.ult;
+    $('hData').textContent=ult?dataBR(ult.data):'—';
+    $('hMedia').textContent=ult?ult.media.toFixed(1)+' kg':'—';
+    $('hGanho').textContent=ev.ganho!==null?(ev.ganho>=0?'+':'')+ev.ganho.toFixed(1)+' kg/animal':'—';
+    $('hDias').textContent=ev.dias!==null?ev.dias+' dia'+(ev.dias===1?'':'s'):'—';
+    $('hGmd').textContent=ev.gmd!==null?(ev.gmd>=0?'+':'')+ev.gmd.toFixed(3)+' kg/dia':'—';
+    $('hQtd').textContent=(l.historico||[]).length;
+    $('histTabelaBox').classList.toggle('hidden',!(l.historico&&l.historico.length));
+    $('histList').innerHTML=(l.historico||[]).slice().reverse().map((h,idx)=>`<tr><td>${dataBR(h.data)}</td><td>${h.animais}</td><td>${Number(h.media).toFixed(1)}</td><td>${h.gmd===null||h.gmd===undefined?'—':(h.gmd>=0?'+':'')+Number(h.gmd).toFixed(3)}</td></tr>`).join('');
 
     if(reset){$('modo').value=l.modo;$('pKg').value=(+l.precoKg||0).toFixed(2);$('pA').value=(+l.precoArroba||0).toFixed(2);$('antEdit').value=l.anterior??''}
     $('kgBox').classList.toggle('hidden',$('modo').value!=='kg');$('aBox').classList.toggle('hidden',$('modo').value!=='arroba');
@@ -221,7 +278,10 @@ Total: ${c.a.toFixed(2)} @
 Média: ${c.ma.toFixed(2)} @
 ${l.anterior?`Peso médio anterior: ${l.anterior.toFixed(1)} kg
 Diferença da média anterior: ${(d>=0?'+':'')+d.toFixed(1)} kg
-`:''}Negociação: ${m}
+`:''}${(()=>{let e=evolucaoAtual(l);return e.ult?`Última pesagem salva: ${dataBR(e.ult.data)}
+${e.dias!==null?`Dias desde a última: ${e.dias}
+`:''}${e.gmd!==null?`GMD: ${(e.gmd>=0?'+':'')+e.gmd.toFixed(3)} kg/dia
+`:''}`:''})()}Negociação: ${m}
 Valor estimado: ${money(v)}
 Média por animal: ${money(c.n?v/c.n:0)}
 
@@ -441,8 +501,8 @@ function pdfLot(){let l=cur();if(l)sharePdf(buildPdf('PESAGEM DO CURRAL',lotBloc
 function pdfAll(){sharePdf(buildPdf('PESAGEM DO CURRAL',allBlocks()),'pesagem_resumo_geral.pdf','Resumo Geral - Pesagem do Curral')}
 
 function dl(data,name,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()}
-function csv(){let r=['Lote;Animal;Peso kg;Arrobas;Forma;Preco;Valor lote'];S.lotes.forEach(l=>l.pesos.forEach((p,i)=>r.push(`${l.nome};Animal ${i+1};${p};${(p/30).toFixed(2)};${l.modo};${l.modo==='arroba'?l.precoArroba:l.precoKg};${value(l).toFixed(2)}`)));dl('\ufeff'+r.join('\n'),'pesagem_curral.csv','text/csv')}
-function backup(){dl(JSON.stringify({version:'4.2',state:S},null,2),'backup_curral_v42.json','application/json')}
+function csv(){let r=['PESAGEM ATUAL','Lote;Animal;Peso kg;Arrobas;Forma;Preco;Valor lote'];S.lotes.forEach(l=>l.pesos.forEach((p,i)=>r.push(`${l.nome};Animal ${i+1};${p};${(p/30).toFixed(2)};${l.modo};${l.modo==='arroba'?l.precoArroba:l.precoKg};${value(l).toFixed(2)}`)));r.push('','HISTORICO','Lote;Data;Animais;Peso total kg;Media kg;Arrobas;Ganho medio kg;Dias;GMD kg/dia');S.lotes.forEach(l=>(l.historico||[]).forEach(h=>r.push(`${l.nome};${dataBR(h.data)};${h.animais};${Number(h.pesoTotal).toFixed(1)};${Number(h.media).toFixed(1)};${Number(h.arrobas).toFixed(2)};${h.ganhoMedio==null?'':Number(h.ganhoMedio).toFixed(2)};${h.diasDesdeAnterior??''};${h.gmd==null?'':Number(h.gmd).toFixed(3)}`)));dl('\ufeff'+r.join('\n'),'pesagem_curral.csv','text/csv')}
+function backup(){dl(JSON.stringify({version:'4.4',state:S},null,2),'backup_curral_v44.json','application/json')}
 function restore(f){if(!f)return;let r=new FileReader;r.onload=()=>{try{let x=JSON.parse(r.result),st=x.state||x.S;if(!st||!Array.isArray(st.lotes))throw 0;if(confirm('Restaurar backup e substituir dados atuais?')){S=st;save();render();alert('Backup restaurado.')}}catch(e){alert('Backup inválido.')}};r.readAsText(f)}
 function delLot(){let l=cur();if(l&&confirm('Excluir '+l.nome+'?')){S.lotes=S.lotes.filter(x=>x.id!=l.id);S.atual=null;save();render()}}
 
