@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f4e78">
-<link rel="manifest" href="manifest.json?v=454">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=454">
+<link rel="manifest" href="manifest.json?v=460">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=460">
 <title>Pesagem Curral</title>
 <style>
 body{font-family:Arial;margin:0;background:#f3f5f7;color:#17202a}
@@ -82,11 +82,47 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 3px;b
 .hist-share-row button{margin:0;padding:10px 7px;font-size:12px;line-height:1.15;min-height:46px}
 @media(max-width:420px){.hist-share-row button{font-size:11px}}
 
+
+/* V4.6 — VISUAL PREMIUM (somente aparência) */
+:root{--pn:#10283d;--pb:#1d5278;--pb2:#28658f;--pg:#b88924;--pi:#172330;--pm:#66758a;--pbg:#eef2f5}
+body{background:radial-gradient(circle at top right,rgba(29,82,120,.09),transparent 27rem),linear-gradient(180deg,#e9eef2 0,#f4f6f8 22rem,#eef2f5 100%);color:var(--pi)}
+.container{max-width:920px}
+h1,h2,h3{letter-spacing:-.02em;color:var(--pi)}
+.c{background:rgba(255,255,255,.97);border:1px solid rgba(16,40,61,.07);box-shadow:0 8px 24px rgba(16,40,61,.08);border-radius:18px}
+input,select{background:#fff;border:1px solid #cfd9e1;border-radius:12px;box-shadow:inset 0 1px 2px rgba(16,40,61,.025)}
+input:focus,select:focus{outline:none;border-color:var(--pb2);box-shadow:0 0 0 3px rgba(40,101,143,.12)}
+button{border-radius:12px;box-shadow:0 3px 8px rgba(16,40,61,.10);letter-spacing:.01em;transition:transform .08s ease,filter .12s ease}
+button:active{transform:scale(.985)}
+.green{background:linear-gradient(135deg,#1f7b4a,#278b56)}
+.blue{background:linear-gradient(135deg,#17486c,#28658f)}
+.gold{background:linear-gradient(135deg,#9f7010,#bd8a1c)}
+.gray{background:linear-gradient(135deg,#5d6973,#6d7a85)}
+.red{background:linear-gradient(135deg,#a9221b,#c72b22)}
+.m{background:linear-gradient(145deg,#f7f9fa,#eef3f6);border:1px solid rgba(16,40,61,.035);border-radius:13px}
+.m small{color:var(--pm)} .m b{color:var(--pi)}
+.current{background:linear-gradient(90deg,#e8f0f6,#f0f5f8);border-left:4px solid var(--pb);border-radius:10px}
+.note{color:#647389}
+.hist-overlay{backdrop-filter:blur(5px);background:rgba(8,20,30,.60)}
+.hist-modal{background:#edf2f5;border:1px solid rgba(255,255,255,.25);box-shadow:0 24px 70px rgba(0,0,0,.28);border-radius:22px}
+.hist-head{background:linear-gradient(135deg,#10283d,#1b496a);color:#fff;border-radius:16px;box-shadow:0 5px 16px rgba(16,40,61,.18)}
+.hist-head h2{color:#fff}.hist-head button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);box-shadow:none}
+.hist-summary,.hist-entry{border:1px solid rgba(16,40,61,.055);box-shadow:0 5px 16px rgba(16,40,61,.065)}
+.hist-summary{background:linear-gradient(145deg,#fff,#f7fafb)}
+.hist-highlight{background:linear-gradient(90deg,#e4eef5,#edf5f9);color:#17486c;border-left:4px solid var(--pg)}
+.hist-detail-btn{background:linear-gradient(135deg,#17486c,#28658f)!important}
+.premium-brand{margin:0 auto 14px;max-width:860px;padding:15px 17px;border-radius:18px;background:linear-gradient(135deg,#10283d 0%,#173f5d 64%,#1e567b 100%);box-shadow:0 10px 28px rgba(16,40,61,.20);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.premium-brand-main{display:flex;align-items:center;gap:12px;min-width:0}
+.premium-mark{width:46px;height:46px;min-width:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#c69a3a,#a97816);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 5px 14px rgba(0,0,0,.18);font-size:25px}
+.premium-brand strong{display:block;font-size:20px;line-height:1.05}.premium-brand small{display:block;color:#d8e4ec;margin-top:4px;font-size:12px}
+.premium-status{white-space:nowrap;padding:7px 9px;border-radius:999px;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.15);color:#f4e1af;font-size:11px;font-weight:800}
+@media(max-width:520px){.premium-brand{margin:8px 10px 10px;padding:12px 13px;border-radius:16px}.premium-mark{width:42px;height:42px;min-width:42px;font-size:22px}.premium-brand strong{font-size:18px}.premium-status{font-size:10px;padding:6px 7px}.c{border-radius:16px}}
+
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pesagem Curral">
 </head>
 <body>
+<div class="premium-brand"><div class="premium-brand-main"><div class="premium-mark">⚖</div><div><strong>Pesagem do Curral</strong><small>Controle de pesagem e evolução do rebanho</small></div></div><div class="premium-status">PREMIUM</div></div>
 <header>🐂 Pesagem do Curral</header>
 <div class="w">
 

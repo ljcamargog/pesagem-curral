@@ -1,10 +1,7 @@
-PESAGEM DO CURRAL — V4.5.4
-
-NOVIDADE:
-- Cada pesagem finalizada no histórico agora pode ser compartilhada novamente.
-- Botão COMPARTILHAR RESUMO: envia os dados daquela pesagem em texto.
-- Botão COMPARTILHAR PDF: gera PDF específico daquela pesagem.
-- Quando disponíveis, os pesos individuais também entram no resumo/PDF.
-- Pesagens antigas sem pesos individuais continuam compartilháveis com médias e totais.
-- Mantidas todas as funções e o armazenamento curralV4 da V4.5.3.
-- JavaScript validado antes do empacotamento.
+PESAGEM DO CURRAL — V4.6 VISUAL PREMIUM
+Base: V4.5.4 funcional.
+Mudança exclusivamente visual: cabeçalho premium, azul petróleo/grafite/dourado,
+cartões, botões, campos e histórico refinados.
+Nenhuma função ou cálculo foi removido/alterado.
+Mantém curralV4 e os dados existentes.
+JavaScript validado.
