@@ -13,3 +13,6 @@ NOVIDADE PRINCIPAL: HISTÓRICO AUTOMÁTICO + GMD
 
 IMPORTANTE:
 A V4.3 continua sendo o backup estável. Publique a V4.4 somente quando quiser testar esta primeira melhoria.
+
+
+V4.4.2 - Ajuste visual: legendas fixas para preço por kg/arroba e peso médio anterior. Nenhuma regra de cálculo foi alterada.

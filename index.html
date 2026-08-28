@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f4e78">
-<link rel="manifest" href="manifest.json?v=44">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=44">
+<link rel="manifest" href="manifest.json?v=442">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=442">
 <title>Pesagem Curral</title>
 <style>
 body{font-family:Arial;margin:0;background:#f3f5f7;color:#17202a}
@@ -23,6 +23,7 @@ button{border:0;background:#1f4e78;color:#fff;font-weight:bold;min-height:50px}
 .hidden{display:none}.hi{background:#fff4cc}.badge{background:#eaf2f8;padding:10px;border-radius:9px;font-weight:bold}
 table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 3px;border-bottom:1px solid #eee;text-align:center}
 .note{font-size:12px;color:#667085}
+.field-label{display:block;font-size:13px;font-weight:bold;color:#475467;margin:10px 2px 1px}
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pesagem Curral">
@@ -86,8 +87,9 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 3px;b
 <option value="kg">Negociar por kg</option>
 <option value="arroba">Negociar por arroba</option>
 </select>
-<div id="kgBox"><input id="pKg" class="hi" type="number" inputmode="decimal" step="0.01" placeholder="Preço por kg" oninput="config()"></div>
-<div id="aBox" class="hidden"><input id="pA" class="hi" type="number" inputmode="decimal" step="0.01" placeholder="Preço por arroba" oninput="config()"></div>
+<div id="kgBox"><label class="field-label" for="pKg">Preço por kg (R$)</label><input id="pKg" class="hi" type="number" inputmode="decimal" step="0.01" placeholder="Preço por kg" oninput="config()"></div>
+<div id="aBox" class="hidden"><label class="field-label" for="pA">Preço por arroba (R$)</label><input id="pA" class="hi" type="number" inputmode="decimal" step="0.01" placeholder="Preço por arroba" oninput="config()"></div>
+<label class="field-label" for="antEdit">Peso médio anterior do lote (kg) — opcional</label>
 <input id="antEdit" type="number" inputmode="decimal" placeholder="Peso médio anterior do lote" oninput="config()">
 
 <div class="g">
