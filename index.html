@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f4e78">
-<link rel="manifest" href="manifest.json?v=442">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=442">
+<link rel="manifest" href="manifest.json?v=450">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=450">
 <title>Pesagem Curral</title>
 <style>
 body{font-family:Arial;margin:0;background:#f3f5f7;color:#17202a}
@@ -24,6 +24,46 @@ button{border:0;background:#1f4e78;color:#fff;font-weight:bold;min-height:50px}
 table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 3px;border-bottom:1px solid #eee;text-align:center}
 .note{font-size:12px;color:#667085}
 .field-label{display:block;font-size:13px;font-weight:bold;color:#475467;margin:10px 2px 1px}
+
+/* V4.5 — melhorias de uso no curral e histórico completo */
+#peso{
+  min-height:76px;
+  font-size:34px;
+  font-weight:800;
+  text-align:center;
+  letter-spacing:.5px;
+}
+#peso::placeholder{font-size:20px;font-weight:400;text-align:left}
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.compact-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.compact-actions button{min-height:58px;font-size:12px;line-height:1.15;padding:8px 5px;margin:0}
+.backup-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.backup-actions button{min-height:48px;font-size:12px;margin:0}
+.lots-table th,.lots-table td{font-size:12px;padding:8px 3px}
+.btn-history{min-height:34px!important;width:auto!important;padding:5px 8px!important;margin:0!important;font-size:11px!important;background:#1f4e78!important}
+.hist-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:18px;overflow:auto}
+.hist-modal{background:#f3f5f7;width:min(760px,100%);border-radius:16px;padding:12px;box-shadow:0 12px 40px rgba(0,0,0,.28)}
+.hist-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.hist-modal-head h2{margin:0;font-size:21px}
+.hist-close{width:auto!important;min-height:38px!important;padding:6px 12px!important;margin:0!important;background:#5f6b76!important}
+.hist-entry{background:#fff;border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:0 2px 8px #0001}
+.hist-entry h3{margin:0 0 9px;font-size:17px}
+.hist-entry-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.hist-entry-grid .m{padding:8px}
+.hist-entry-grid .m b{font-size:16px}
+.hist-detail-btn{background:#1f4e78!important;min-height:40px!important;font-size:13px!important;margin-top:9px!important}
+.hist-weights{margin-top:8px;max-height:300px;overflow:auto;border-top:1px solid #e5e7eb;padding-top:6px}
+.hist-weights table{font-size:12px}
+.latest-badge{display:inline-block;background:#eaf2f8;color:#1f4e78;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:bold;margin-left:6px}
+@media(max-width:520px){
+  .action-row{grid-template-columns:1fr 1fr}
+  .action-row button{font-size:12px;padding:8px 5px}
+  .compact-actions{grid-template-columns:repeat(3,1fr)}
+  .compact-actions button{font-size:10.5px}
+  .hist-entry-grid{grid-template-columns:1fr 1fr}
+  .lots-table th,.lots-table td{font-size:10.5px}
+}
+
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pesagem Curral">
@@ -99,8 +139,10 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 3px;b
 <div class="m"><small>Equiv. R$/@</small><b id="eqa">R$ 0</b></div>
 </div>
 
+<div class="action-row">
 <button class="green" onclick="shareLot()">COMPARTILHAR TEXTO DO LOTE</button>
 <button class="gold" onclick="pdfLot()">COMPARTILHAR PDF DO LOTE</button>
+</div>
 </div>
 
 <div id="listCard" class="c hidden">
@@ -123,23 +165,37 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 3px;b
 <div class="m"><small>Valor total</small><b id="gv">R$ 0</b></div>
 <div class="m"><small>Média/animal</small><b id="gmv">R$ 0</b></div>
 </div>
-<button onclick="shareAll()">COMPARTILHAR RESUMO GERAL</button>
-<button class="gold" onclick="pdfAll()">COMPARTILHAR PDF GERAL</button>
-<button class="gray" onclick="csv()">EXPORTAR CSV COMPLETO</button>
-<button class="gray" onclick="backup()">FAZER BACKUP COMPLETO</button>
+<div class="compact-actions">
+<button onclick="shareAll()">COMPARTILHAR<br>RESUMO</button>
+<button class="gold" onclick="pdfAll()">COMPARTILHAR<br>PDF</button>
+<button class="gray" onclick="csv()">EXPORTAR<br>CSV</button>
+</div>
+<div class="backup-actions">
+<button class="gray" onclick="backup()">FAZER BACKUP</button>
 <button class="gray" onclick="document.getElementById('file').click()">RESTAURAR BACKUP</button>
+</div>
 <input hidden id="file" type="file" accept=".json" onchange="restore(this.files[0])">
 </div>
 
 <div class="c">
 <h2>Lotes registrados</h2>
-<table>
-<thead><tr><th>Lote</th><th>Animais</th><th>kg</th><th>@</th><th>Valor</th></tr></thead>
+<table class="lots-table">
+<thead><tr><th>Lote</th><th>Animais</th><th>kg</th><th>@</th><th>Valor</th><th>Histórico</th></tr></thead>
 <tbody id="lots"></tbody>
 </table>
 <button class="red" onclick="delLot()">EXCLUIR LOTE SELECIONADO</button>
 </div>
 
+</div>
+
+<div id="histOverlay" class="hist-overlay hidden" onclick="if(event.target===this)fecharHistoricoLote()">
+  <div class="hist-modal">
+    <div class="hist-modal-head">
+      <h2 id="histModalTitle">Histórico do lote</h2>
+      <button class="hist-close" onclick="fecharHistoricoLote()">FECHAR</button>
+    </div>
+    <div id="histModalBody"></div>
+  </div>
 </div>
 
 <script>
@@ -178,7 +234,7 @@ function migrate(){
 migrate();
 
 function normalizeV44(){
-  S.version=4.4;
+  S.version=4.5;
   (S.lotes||[]).forEach(l=>{
     if(!Array.isArray(l.historico)) l.historico=[];
     if(l.sessaoInicio===undefined) l.sessaoInicio=null;
@@ -233,7 +289,23 @@ function finalizarPesagem(){
   if(!c.n)return alert('Não há pesos registrados para salvar no histórico.');
   if(!confirm(`Finalizar a pesagem atual de ${c.n} animais e salvar no histórico do lote "${l.nome}"?`))return;
   let anterior=ultimoHistorico(l),data=new Date().toISOString(),dias=anterior?diasEntre(anterior.data,data):null,ganho=anterior?c.m-anterior.media:null,gmd=(dias&&dias>0)?ganho/dias:null;
-  l.historico.push({data,animais:c.n,pesoTotal:c.t,media:c.m,arrobas:c.a,mediaArrobas:c.ma,valor:value(l),modo:l.modo,preco:l.modo==='arroba'?l.precoArroba:l.precoKg,diasDesdeAnterior:dias,ganhoMedio:ganho,gmd});
+  l.historico.push({
+    data,
+    animais:c.n,
+    pesoTotal:c.t,
+    media:c.m,
+    arrobas:c.a,
+    mediaArrobas:c.ma,
+    valor:value(l),
+    modo:l.modo,
+    preco:l.modo==='arroba'?l.precoArroba:l.precoKg,
+    precoKg:+l.precoKg||0,
+    precoArroba:+l.precoArroba||0,
+    diasDesdeAnterior:dias,
+    ganhoMedio:ganho,
+    gmd,
+    pesos:l.pesos.slice()
+  });
   l.anterior=c.m;
   l.pesos=[];l.sessaoInicio=null;
   save();render();alert('Pesagem salva no histórico. O lote está pronto para uma nova pesagem.');
@@ -272,8 +344,77 @@ function render(reset=true){
   let cs=S.lotes.map(calcLote),g={n:cs.reduce((s,c)=>s+c.n,0),t:cs.reduce((s,c)=>s+c.t,0),a:cs.reduce((s,c)=>s+c.a,0)};g.m=g.n?g.t/g.n:0;g.ma=g.n?g.a/g.n:0;let tv=S.lotes.reduce((s,x)=>s+value(x),0);
   $('gl').textContent=S.lotes.length;$('gn').textContent=g.n;$('gkg').textContent=g.t.toFixed(1)+' kg';$('gm').textContent=g.m.toFixed(1)+' kg';
   $('ga').textContent=g.a.toFixed(2)+' @';$('gma').textContent=g.ma.toFixed(2)+' @';$('gv').textContent=money(tv);$('gmv').textContent=money(g.n?tv/g.n:0);
-  $('lots').innerHTML=S.lotes.map(x=>{let c=calcLote(x);return `<tr><td>${x.nome}</td><td>${c.n}</td><td>${c.t.toFixed(1)}</td><td>${c.a.toFixed(2)}</td><td>${money(value(x))}</td></tr>`}).join('');
+  $('lots').innerHTML=S.lotes.map(x=>{
+    let c=calcLote(x),hq=(x.historico||[]).length;
+    return `<tr>
+      <td>${x.nome}</td>
+      <td>${c.n}</td>
+      <td>${c.t.toFixed(1)}</td>
+      <td>${c.a.toFixed(2)}</td>
+      <td>${money(value(x))}</td>
+      <td><button class="btn-history" onclick="abrirHistoricoLote(${x.id})">VER (${hq})</button></td>
+    </tr>`
+  }).join('');
   save()
+}
+
+
+function histPrecoTexto(h){
+  if(h.modo==='arroba')return money(h.preco||h.precoArroba||0)+'/@';
+  return money(h.preco||h.precoKg||0)+'/kg';
+}
+function histValor(h){
+  if(h.valor!==undefined&&h.valor!==null)return +h.valor||0;
+  if(h.modo==='arroba')return (+h.arrobas||0)*(+h.preco||+h.precoArroba||0);
+  return (+h.pesoTotal||0)*(+h.preco||+h.precoKg||0);
+}
+function abrirHistoricoLote(id){
+  let l=S.lotes.find(x=>x.id==id);
+  if(!l)return;
+  $('histModalTitle').textContent='Histórico — '+l.nome;
+  let hs=(l.historico||[]).slice().reverse();
+  if(!hs.length){
+    $('histModalBody').innerHTML='<div class="hist-entry"><b>Ainda não há pesagens finalizadas neste lote.</b></div>';
+  }else{
+    $('histModalBody').innerHTML=hs.map((h,revIdx)=>{
+      let realIdx=(l.historico.length-1)-revIdx;
+      let val=histValor(h);
+      let mediaAnimal=(+h.animais||0)?val/(+h.animais):0;
+      let gmd=h.gmd===null||h.gmd===undefined?'—':(h.gmd>=0?'+':'')+Number(h.gmd).toFixed(3)+' kg/dia';
+      let pesos=Array.isArray(h.pesos)?h.pesos:[];
+      let detailId='histPesos_'+id+'_'+realIdx;
+      return `<div class="hist-entry">
+        <h3>Pesagem de ${dataBR(h.data)} ${revIdx===0?'<span class="latest-badge">MAIS RECENTE</span>':''}</h3>
+        <div class="hist-entry-grid">
+          <div class="m"><small>Animais</small><b>${h.animais||0}</b></div>
+          <div class="m"><small>Peso total</small><b>${Number(h.pesoTotal||0).toFixed(1)} kg</b></div>
+          <div class="m"><small>Peso médio</small><b>${Number(h.media||0).toFixed(1)} kg</b></div>
+          <div class="m"><small>Total arrobas</small><b>${Number(h.arrobas||0).toFixed(2)} @</b></div>
+          <div class="m"><small>Média arrobas</small><b>${Number(h.mediaArrobas||0).toFixed(2)} @</b></div>
+          <div class="m"><small>GMD</small><b>${gmd}</b></div>
+          <div class="m"><small>Preço daquela data</small><b>${histPrecoTexto(h)}</b></div>
+          <div class="m"><small>Valor do lote</small><b>${money(val)}</b></div>
+          <div class="m"><small>Média/animal</small><b>${money(mediaAnimal)}</b></div>
+          <div class="m"><small>Variação média</small><b>${h.ganhoMedio==null?'—':(h.ganhoMedio>=0?'+':'')+Number(h.ganhoMedio).toFixed(1)+' kg'}</b></div>
+        </div>
+        ${pesos.length?`<button class="hist-detail-btn" onclick="toggleDetalhesHistorico('${detailId}')">VER PESOS DESTA PESAGEM</button>
+        <div id="${detailId}" class="hist-weights hidden">
+          <table><thead><tr><th>Animal</th><th>kg</th><th>@</th></tr></thead>
+          <tbody>${pesos.map((p,i)=>`<tr><td>Animal ${i+1}</td><td>${Number(p).toFixed(1)}</td><td>${(Number(p)/30).toFixed(2)}</td></tr>`).join('')}</tbody></table>
+        </div>`:`<p class="note">Esta pesagem foi salva em uma versão anterior e não possui os pesos individuais arquivados.</p>`}
+      </div>`;
+    }).join('');
+  }
+  $('histOverlay').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
+function fecharHistoricoLote(){
+  $('histOverlay').classList.add('hidden');
+  document.body.style.overflow='';
+}
+function toggleDetalhesHistorico(id){
+  let el=$(id);
+  if(el)el.classList.toggle('hidden');
 }
 
 function lotText(l){
@@ -510,7 +651,17 @@ function pdfLot(){let l=cur();if(l)sharePdf(buildPdf('PESAGEM DO CURRAL',lotBloc
 function pdfAll(){sharePdf(buildPdf('PESAGEM DO CURRAL',allBlocks()),'pesagem_resumo_geral.pdf','Resumo Geral - Pesagem do Curral')}
 
 function dl(data,name,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()}
-function csv(){let r=['PESAGEM ATUAL','Lote;Animal;Peso kg;Arrobas;Forma;Preco;Valor lote'];S.lotes.forEach(l=>l.pesos.forEach((p,i)=>r.push(`${l.nome};Animal ${i+1};${p};${(p/30).toFixed(2)};${l.modo};${l.modo==='arroba'?l.precoArroba:l.precoKg};${value(l).toFixed(2)}`)));r.push('','HISTORICO','Lote;Data;Animais;Peso total kg;Media kg;Arrobas;Ganho medio kg;Dias;GMD kg/dia');S.lotes.forEach(l=>(l.historico||[]).forEach(h=>r.push(`${l.nome};${dataBR(h.data)};${h.animais};${Number(h.pesoTotal).toFixed(1)};${Number(h.media).toFixed(1)};${Number(h.arrobas).toFixed(2)};${h.ganhoMedio==null?'':Number(h.ganhoMedio).toFixed(2)};${h.diasDesdeAnterior??''};${h.gmd==null?'':Number(h.gmd).toFixed(3)}`)));dl('\ufeff'+r.join('\n'),'pesagem_curral.csv','text/csv')}
+function csv(){
+  let r=['PESAGEM ATUAL','Lote;Animal;Peso kg;Arrobas;Forma;Preco;Valor lote'];
+  S.lotes.forEach(l=>l.pesos.forEach((p,i)=>r.push(`${l.nome};Animal ${i+1};${p};${(p/30).toFixed(2)};${l.modo};${l.modo==='arroba'?l.precoArroba:l.precoKg};${value(l).toFixed(2)}`)));
+  r.push('','HISTORICO','Lote;Data;Animais;Peso total kg;Media kg;Arrobas;Media arrobas;Forma;Preco;Valor lote;Media por animal;Ganho medio kg;Dias;GMD kg/dia');
+  S.lotes.forEach(l=>(l.historico||[]).forEach(h=>{
+    let hv=histValor(h),hm=(+h.animais||0)?hv/(+h.animais):0;
+    r.push(`${l.nome};${dataBR(h.data)};${h.animais};${Number(h.pesoTotal||0).toFixed(1)};${Number(h.media||0).toFixed(1)};${Number(h.arrobas||0).toFixed(2)};${Number(h.mediaArrobas||0).toFixed(2)};${h.modo||''};${h.preco??''};${hv.toFixed(2)};${hm.toFixed(2)};${h.ganhoMedio==null?'':Number(h.ganhoMedio).toFixed(2)};${h.diasDesdeAnterior??''};${h.gmd==null?'':Number(h.gmd).toFixed(3)}`);
+    (h.pesos||[]).forEach((p,i)=>r.push(`${l.nome} - ${dataBR(h.data)};Animal ${i+1};${Number(p).toFixed(1)};${(Number(p)/30).toFixed(2)}`));
+  }));
+  dl('\ufeff'+r.join('\n'),'pesagem_curral.csv','text/csv')
+}
 function backup(){dl(JSON.stringify({version:'4.4',state:S},null,2),'backup_curral_v44.json','application/json')}
 function restore(f){if(!f)return;let r=new FileReader;r.onload=()=>{try{let x=JSON.parse(r.result),st=x.state||x.S;if(!st||!Array.isArray(st.lotes))throw 0;if(confirm('Restaurar backup e substituir dados atuais?')){S=st;save();render();alert('Backup restaurado.')}}catch(e){alert('Backup inválido.')}};r.readAsText(f)}
 function delLot(){let l=cur();if(l&&confirm('Excluir '+l.nome+'?')){S.lotes=S.lotes.filter(x=>x.id!=l.id);S.atual=null;save();render()}}
