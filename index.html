@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f4e78">
-<link rel="manifest" href="manifest.json?v=461">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=461">
+<link rel="manifest" href="manifest.json?v=462">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=462">
 <title>Pesagem Curral</title>
 <style>
 body{font-family:Arial;margin:0;background:#f3f5f7;color:#17202a}
@@ -130,6 +130,16 @@ button:active{transform:scale(.985)}
 .quick-undo{margin-top:7px;min-height:38px;padding:7px;font-size:11px;background:linear-gradient(135deg,#5d6973,#6d7a85)}
 @media(max-width:420px){.quick-lots{gap:5px}.quick-lot{font-size:10px;padding:6px 3px}.last-weight strong{font-size:21px}.last-weight strong .arroba{font-size:27px}}
 
+
+/* V4.6.2 — resumo selecionável entre lotes */
+.summary-lot-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+.summary-lot-option{display:flex;align-items:center;gap:9px;padding:10px 11px;border:1px solid #d6e0e7;border-radius:12px;background:#f7f9fa;font-weight:750;color:#23384b}
+.summary-lot-option input{width:20px;height:20px;min-width:20px;margin:0;box-shadow:none}
+.summary-lot-option span{min-width:0}.summary-lot-option small{display:block;color:#66758a;font-weight:600;margin-top:2px}
+.summary-select-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.summary-select-actions button{margin:0;min-height:40px;font-size:11px;padding:8px}
+@media(max-width:520px){.summary-lot-picker{grid-template-columns:1fr}.summary-lot-option{padding:9px 10px}}
+
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pesagem Curral">
@@ -213,7 +223,13 @@ button:active{transform:scale(.985)}
 </div>
 
 <div class="c">
-<h2>Resumo geral — todos os lotes</h2>
+<h2>Resumo entre lotes</h2>
+<p class="note">Marque somente os lotes que deseja juntar neste resumo.</p>
+<div id="summaryLotPicker" class="summary-lot-picker"></div>
+<div class="summary-select-actions">
+<button class="gray" onclick="selectAllSummaryLots(true)">SELECIONAR TODOS</button>
+<button class="gray" onclick="selectAllSummaryLots(false)">LIMPAR SELEÇÃO</button>
+</div>
 <div class="g">
 <div class="m"><small>Lotes</small><b id="gl">0</b></div>
 <div class="m"><small>Animais</small><b id="gn">0</b></div>
@@ -320,6 +336,7 @@ const value=l=>{
   return l.modo==='arroba'?c.a*(+l.precoArroba||0):c.t*(+l.precoKg||0)
 };
 let ultimoRegistroVisual=null;
+let resumoSelecionados=new Set(JSON.parse(localStorage.getItem('curralResumoSelecionados')||'[]').map(Number));
 function save(){localStorage.setItem('curralV4',JSON.stringify(S))}
 function quickSelectLot(id){
   S.atual=+id;save();render();
@@ -395,6 +412,24 @@ function finalizarPesagem(){
   save();render();alert('Pesagem salva no histórico. O lote está pronto para uma nova pesagem.');
 }
 
+function selectedSummaryLots(){
+  return S.lotes.filter(l=>resumoSelecionados.has(+l.id));
+}
+function toggleSummaryLot(id,checked){
+  id=+id;
+  if(checked)resumoSelecionados.add(id);else resumoSelecionados.delete(id);
+  localStorage.setItem('curralResumoSelecionados',JSON.stringify([...resumoSelecionados]));
+  render(false);
+}
+function selectAllSummaryLots(on){
+  resumoSelecionados=new Set(on?S.lotes.map(l=>+l.id):[]);
+  localStorage.setItem('curralResumoSelecionados',JSON.stringify([...resumoSelecionados]));
+  render(false);
+}
+function summaryTotals(lotes){
+  let cs=lotes.map(calcLote),g={n:cs.reduce((s,c)=>s+c.n,0),t:cs.reduce((s,c)=>s+c.t,0),a:cs.reduce((s,c)=>s+c.a,0)};
+  g.m=g.n?g.t/g.n:0;g.ma=g.n?g.a/g.n:0;g.v=lotes.reduce((s,x)=>s+value(x),0);return g;
+}
 function render(reset=true){
   let l=cur();
   $('sel').innerHTML='<option value="">Selecione um lote</option>'+S.lotes.map(x=>`<option value="${x.id}" ${l&&x.id==l.id?'selected':''}>${x.nome}</option>`).join('');
@@ -432,8 +467,9 @@ function render(reset=true){
     $('list').innerHTML=l.pesos.map((p,i)=>`<tr><td>Animal ${i+1}</td><td>${p.toFixed(1)}</td><td>${(p/30).toFixed(2)}</td></tr>`).join('');
   }
 
-  let cs=S.lotes.map(calcLote),g={n:cs.reduce((s,c)=>s+c.n,0),t:cs.reduce((s,c)=>s+c.t,0),a:cs.reduce((s,c)=>s+c.a,0)};g.m=g.n?g.t/g.n:0;g.ma=g.n?g.a/g.n:0;let tv=S.lotes.reduce((s,x)=>s+value(x),0);
-  $('gl').textContent=S.lotes.length;$('gn').textContent=g.n;$('gkg').textContent=g.t.toFixed(1)+' kg';$('gm').textContent=g.m.toFixed(1)+' kg';
+  let sl=selectedSummaryLots(),g=summaryTotals(sl),tv=g.v;
+  $('summaryLotPicker').innerHTML=S.lotes.length?S.lotes.map(x=>{let c=calcLote(x);return `<label class="summary-lot-option"><input type="checkbox" ${resumoSelecionados.has(+x.id)?'checked':''} onchange="toggleSummaryLot(${x.id},this.checked)"><span>${x.nome}<small>${c.n} animais • ${c.t.toFixed(1)} kg • ${c.a.toFixed(2)} @</small></span></label>`}).join(''):'<span class="note">Nenhum lote registrado.</span>';
+  $('gl').textContent=sl.length;$('gn').textContent=g.n;$('gkg').textContent=g.t.toFixed(1)+' kg';$('gm').textContent=g.m.toFixed(1)+' kg';
   $('ga').textContent=g.a.toFixed(2)+' @';$('gma').textContent=g.ma.toFixed(2)+' @';$('gv').textContent=money(tv);$('gmv').textContent=money(g.n?tv/g.n:0);
   $('lots').innerHTML=S.lotes.map(x=>{
     let c=calcLote(x),hq=(x.historico||[]).length;
@@ -598,21 +634,25 @@ DETALHAMENTO
 ${l.pesos.map((p,i)=>`Animal ${i+1} — ${p.toFixed(1)} kg — ${(p/30).toFixed(2)} @`).join('\n')}`;
 }
 function allText(){
-  let cs=S.lotes.map(calcLote),g={n:cs.reduce((s,c)=>s+c.n,0),t:cs.reduce((s,c)=>s+c.t,0),a:cs.reduce((s,c)=>s+c.a,0)};g.m=g.n?g.t/g.n:0;g.ma=g.n?g.a/g.n:0;let tv=S.lotes.reduce((s,x)=>s+value(x),0);
-  return `RESUMO GERAL — PESAGEM DO CURRAL
+  let lotes=selectedSummaryLots();if(!lotes.length)return 'Nenhum lote selecionado para o resumo.';
+  let g=summaryTotals(lotes);
+  return `RESUMO ENTRE LOTES — PESAGEM DO CURRAL
 
-Lotes: ${S.lotes.length}
+Lotes selecionados: ${lotes.length}
 Animais: ${g.n}
 Peso total: ${g.t.toFixed(1)} kg
 Peso médio: ${g.m.toFixed(1)} kg
 Arrobas: ${g.a.toFixed(2)} @
-Valor total: ${money(tv)}
+Média arrobas: ${g.ma.toFixed(2)} @
+Valor total: ${money(g.v)}
+Média por animal: ${money(g.n?g.v/g.n:0)}
 
-`+S.lotes.map(l=>{let c=calc(l.pesos),m=l.modo==='arroba'?money(l.precoArroba)+'/@':money(l.precoKg)+'/kg';return `${l.nome}: ${c.n} animais | ${c.t.toFixed(1)} kg | ${c.a.toFixed(2)} @ | ${m} | ${money(value(l))}`}).join('\n');
+LOTES INCLUÍDOS
+`+lotes.map(l=>{let c=calc(l.pesos),m=l.modo==='arroba'?money(l.precoArroba)+'/@':money(l.precoKg)+'/kg';return `${l.nome}: ${c.n} animais | ${c.t.toFixed(1)} kg | ${c.a.toFixed(2)} @ | ${m} | ${money(value(l))}`}).join('\n');
 }
 async function share(t){if(navigator.share){try{await navigator.share({text:t})}catch(e){}}else{navigator.clipboard.writeText(t);alert('Relatório copiado.')}}
 function shareLot(){let l=cur();if(l)share(lotText(l))}
-function shareAll(){share(allText())}
+function shareAll(){if(!selectedSummaryLots().length)return alert('Selecione pelo menos um lote para compartilhar.');share(allText())}
 
 /* PDF V4.2: WinAnsi, acentos e tabela */
 function winAnsiBytes(str){
@@ -775,29 +815,27 @@ function lotBlocks(l){
 }
 
 function allBlocks(){
-  let cs=S.lotes.map(calcLote),g={n:cs.reduce((s,c)=>s+c.n,0),t:cs.reduce((s,c)=>s+c.t,0),a:cs.reduce((s,c)=>s+c.a,0)};g.m=g.n?g.t/g.n:0;g.ma=g.n?g.a/g.n:0;let tv=S.lotes.reduce((s,x)=>s+value(x),0);
+  let lotes=selectedSummaryLots(),g=summaryTotals(lotes);
   let b=[
-    {type:'heading',text:'RESUMO CONSOLIDADO'},
+    {type:'heading',text:'RESUMO ENTRE LOTES'},
     {text:'Data do relatório: '+new Date().toLocaleDateString('pt-BR')},
-    {text:`Quantidade de lotes: ${S.lotes.length}`},
+    {text:`Quantidade de lotes selecionados: ${lotes.length}`},
     {text:`Quantidade de animais: ${g.n}`},
     {type:'box',label:'PESO TOTAL',value:g.t.toFixed(1)+' kg'},
     {type:'box',label:'TOTAL DE ARROBAS',value:g.a.toFixed(2)+' @'},
-    {type:'box',label:'VALOR TOTAL ESTIMADO',value:money(tv)},
-    {text:`Peso médio geral: ${g.m.toFixed(1)} kg`},
+    {type:'box',label:'VALOR TOTAL ESTIMADO',value:money(g.v)},
+    {text:`Peso médio: ${g.m.toFixed(1)} kg`},
     {text:`Média de arrobas: ${g.ma.toFixed(2)} @`},
-    {text:`Valor médio por animal: ${money(g.n?tv/g.n:0)}`},
-    {type:'space',h:8},
-    {type:'heading',text:'LOTES'}
+    {text:`Valor médio por animal: ${money(g.n?g.v/g.n:0)}`},
+    {type:'space',h:8},{type:'heading',text:'LOTES INCLUÍDOS'}
   ];
-  S.lotes.forEach(l=>{
+  lotes.forEach(l=>{
     let c=calc(l.pesos),m=l.modo==='arroba'?money(l.precoArroba)+'/@':money(l.precoKg)+'/kg';
     b.push({text:`${l.nome} | ${c.n} animais | ${c.t.toFixed(1)} kg | ${c.a.toFixed(2)} @ | ${m} | ${money(value(l))}`});
   });
-  b.push({type:'space',h:8},{type:'rule'},{text:'Relatório de pesagem para conferência comercial.',size:9});
+  b.push({type:'space',h:8},{type:'rule'},{text:'Relatório dos lotes selecionados para conferência comercial.',size:9});
   return b;
 }
-
 async function sharePdf(blob,name,title){
   let f=new File([blob],name,{type:'application/pdf'});
   if(navigator.canShare&&navigator.canShare({files:[f]})&&navigator.share){
@@ -807,14 +845,14 @@ async function sharePdf(blob,name,title){
   alert('PDF gerado. Se o compartilhamento direto não abrir, use o arquivo baixado.')
 }
 function pdfLot(){let l=cur();if(l)sharePdf(buildPdf('PESAGEM DO CURRAL',lotBlocks(l)),'pesagem_'+l.nome.replace(/[^a-z0-9]/gi,'_')+'.pdf','Pesagem - '+l.nome)}
-function pdfAll(){sharePdf(buildPdf('PESAGEM DO CURRAL',allBlocks()),'pesagem_resumo_geral.pdf','Resumo Geral - Pesagem do Curral')}
+function pdfAll(){if(!selectedSummaryLots().length)return alert('Selecione pelo menos um lote para gerar o PDF.');sharePdf(buildPdf('PESAGEM DO CURRAL',allBlocks()),'pesagem_resumo_entre_lotes.pdf','Resumo entre lotes - Pesagem do Curral')}
 
 function dl(data,name,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()}
 function csv(){
   let r=['PESAGEM ATUAL','Lote;Animal;Peso kg;Arrobas;Forma;Preco;Valor lote'];
-  S.lotes.forEach(l=>l.pesos.forEach((p,i)=>r.push(`${l.nome};Animal ${i+1};${p};${(p/30).toFixed(2)};${l.modo};${l.modo==='arroba'?l.precoArroba:l.precoKg};${value(l).toFixed(2)}`)));
+  selectedSummaryLots().forEach(l=>l.pesos.forEach((p,i)=>r.push(`${l.nome};Animal ${i+1};${p};${(p/30).toFixed(2)};${l.modo};${l.modo==='arroba'?l.precoArroba:l.precoKg};${value(l).toFixed(2)}`)));
   r.push('','HISTORICO','Lote;Data;Animais;Peso total kg;Media kg;Arrobas;Media arrobas;Forma;Preco;Valor lote;Media por animal;Ganho medio kg;Dias;GMD kg/dia');
-  S.lotes.forEach(l=>(l.historico||[]).forEach(h=>{
+  selectedSummaryLots().forEach(l=>(l.historico||[]).forEach(h=>{
     let hv=histValor(h),hm=(+h.animais||0)?hv/(+h.animais):0;
     r.push(`${l.nome};${dataBR(h.data)};${h.animais};${Number(h.pesoTotal||0).toFixed(1)};${Number(h.media||0).toFixed(1)};${Number(h.arrobas||0).toFixed(2)};${Number(h.mediaArrobas||0).toFixed(2)};${h.modo||''};${h.preco??''};${hv.toFixed(2)};${hm.toFixed(2)};${h.ganhoMedio==null?'':Number(h.ganhoMedio).toFixed(2)};${h.diasDesdeAnterior??''};${h.gmd==null?'':Number(h.gmd).toFixed(3)}`);
     (h.pesos||[]).forEach((p,i)=>r.push(`${l.nome} - ${dataBR(h.data)};Animal ${i+1};${Number(p).toFixed(1)};${(Number(p)/30).toFixed(2)}`));

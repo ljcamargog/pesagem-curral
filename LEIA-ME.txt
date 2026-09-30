@@ -1,17 +1,15 @@
-PESAGEM DO CURRAL — V4.6.1
-Base: V4.6 Visual Premium.
+PESAGEM DO CURRAL — V4.6.2
+Base: V4.6.1 Proteção de Pesagem.
 
-MELHORIAS PARA USO NO CURRAL:
-- Cada peso continua sendo salvo imediatamente em curralV4.
-- Troca rápida entre até 3 lotes diretamente na área de pesagem.
-- Contador de animais em cada atalho de lote.
-- Lote ativo destacado.
-- Após registrar: mostra lote, kg e arrobas do último animal.
-- Campo de peso limpa e recebe foco novamente para o próximo animal.
-- Desfazer último peso disponível na própria área de pesagem.
-- Confirmação para peso de 1000 kg ou mais, ajudando a detectar zero digitado a mais.
-- Trocar de lote não finaliza nem apaga a pesagem em andamento.
-- Finalizar continua sendo usado apenas para mandar a rodada ao histórico.
-
-Mantido o armazenamento curralV4 e todas as funções anteriores.
-JavaScript validado.
+NOVIDADE:
+- 'Resumo geral — todos os lotes' virou 'Resumo entre lotes'.
+- O usuário escolhe por checkbox quais lotes entram no resumo.
+- Selecionar todos / limpar seleção.
+- Totais, médias, arrobas e valores usam somente os lotes marcados.
+- Compartilhar resumo e PDF usam somente os lotes marcados.
+- PDF identifica os lotes incluídos.
+- CSV do resumo também usa os lotes selecionados.
+- Seleção fica memorizada no navegador.
+- Pesagem rápida e proteção da V4.6.1 foram mantidas.
+- curralV4 preservado.
+- JavaScript validado.
