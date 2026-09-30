@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f4e78">
-<link rel="manifest" href="manifest.json?v=460">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=460">
+<link rel="manifest" href="manifest.json?v=461">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=461">
 <title>Pesagem Curral</title>
 <style>
 body{font-family:Arial;margin:0;background:#f3f5f7;color:#17202a}
@@ -117,6 +117,19 @@ button:active{transform:scale(.985)}
 .premium-status{white-space:nowrap;padding:7px 9px;border-radius:999px;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.15);color:#f4e1af;font-size:11px;font-weight:800}
 @media(max-width:520px){.premium-brand{margin:8px 10px 10px;padding:12px 13px;border-radius:16px}.premium-mark{width:42px;height:42px;min-width:42px;font-size:22px}.premium-brand strong{font-size:18px}.premium-status{font-size:10px;padding:6px 7px}.c{border-radius:16px}}
 
+
+/* V4.6.1 — operação rápida e segura no curral */
+.quick-lots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:0 0 8px}
+.quick-lot{min-height:43px;margin:0;padding:7px 5px;font-size:11px;line-height:1.15;background:#66737d}
+.quick-lot.active{background:linear-gradient(135deg,#17486c,#28658f);box-shadow:0 0 0 2px rgba(184,137,36,.55),0 4px 10px rgba(16,40,61,.16)}
+.active-lot-line{text-align:center;font-size:12px;font-weight:850;color:#17486c;margin:-1px 0 7px}
+.last-weight{margin:9px 0 0;padding:10px 11px;border-radius:13px;background:linear-gradient(135deg,#edf5f8,#f8fafb);border-left:4px solid #b88924;text-align:center}
+.last-weight small{display:block;font-size:11px;font-weight:850;color:#526578;margin-bottom:2px}
+.last-weight strong{display:block;font-size:23px;line-height:1.05;color:#10283d}
+.last-weight strong .arroba{font-size:29px;color:#9f7010}
+.quick-undo{margin-top:7px;min-height:38px;padding:7px;font-size:11px;background:linear-gradient(135deg,#5d6973,#6d7a85)}
+@media(max-width:420px){.quick-lots{gap:5px}.quick-lot{font-size:10px;padding:6px 3px}.last-weight strong{font-size:21px}.last-weight strong .arroba{font-size:27px}}
+
 </style>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pesagem Curral">
@@ -137,9 +150,13 @@ button:active{transform:scale(.985)}
 
 <div id="pesoCard" class="c hidden">
 <h2>Pesagem rápida</h2>
+<div id="quickLots" class="quick-lots"></div>
+<div id="activeLotLine" class="active-lot-line"></div>
 <input id="peso" type="number" inputmode="decimal" placeholder="Peso do animal em kg">
 <button onclick="add()">REGISTRAR PESAGEM</button>
-<p class="note">Sem brinco: Animal 1, Animal 2, Animal 3... automaticamente.</p>
+<div id="lastWeight" class="last-weight hidden"></div>
+<button id="quickUndo" class="quick-undo hidden" onclick="undo()">DESFAZER ÚLTIMO PESO</button>
+<p class="note">Cada peso é salvo imediatamente no lote selecionado.</p>
 </div>
 
 <div id="resCard" class="c hidden">
@@ -302,7 +319,13 @@ const value=l=>{
   let c=calcLote(l);
   return l.modo==='arroba'?c.a*(+l.precoArroba||0):c.t*(+l.precoKg||0)
 };
+let ultimoRegistroVisual=null;
 function save(){localStorage.setItem('curralV4',JSON.stringify(S))}
+function quickSelectLot(id){
+  S.atual=+id;save();render();
+  setTimeout(()=>{let p=$('peso');if(p)p.focus()},0);
+}
+
 function newLot(){
   let nm=$('nome').value.trim(); if(!nm)return alert('Digite o nome do lote.');
   let id=Date.now(),a=parseFloat($('antNovo').value);
@@ -312,8 +335,27 @@ function newLot(){
   S.atual=id;$('nome').value='';$('antNovo').value='';save();render();$('peso').focus()
 }
 function selectLot(v){S.atual=v?+v:null;save();render()}
-function add(){let l=cur(),p=parseFloat($('peso').value);if(!l)return alert('Crie ou selecione um lote.');if(!p||p<=0)return alert('Digite um peso válido.');if(!l.sessaoInicio)l.sessaoInicio=new Date().toISOString();l.pesos.push(p);$('peso').value='';save();render();$('peso').focus()}
-function undo(){let l=cur();if(l&&l.pesos.length){l.pesos.pop();save();render()}}
+function add(){
+  let l=cur(),p=parseFloat($('peso').value);
+  if(!l)return alert('Crie ou selecione um lote.');
+  if(!p||p<=0)return alert('Digite um peso válido.');
+  if(p>=1000&&!confirm(`O peso digitado foi ${p.toFixed(1)} kg. Deseja registrar mesmo assim?`))return;
+  if(!l.sessaoInicio)l.sessaoInicio=new Date().toISOString();
+  l.pesos.push(p);
+  ultimoRegistroVisual={loteId:l.id,loteNome:l.nome,peso:p};
+  $('peso').value='';
+  save();render();
+  setTimeout(()=>{$('peso').focus()},0);
+}
+function undo(){
+  let l=cur();
+  if(l&&l.pesos.length){
+    l.pesos.pop();
+    ultimoRegistroVisual=null;
+    save();render();
+    setTimeout(()=>{$('peso').focus()},0);
+  }
+}
 function config(){let l=cur();if(!l)return;l.modo=$('modo').value;l.precoKg=+$('pKg').value||0;l.precoArroba=+$('pA').value||0;let a=parseFloat($('antEdit').value);l.anterior=isNaN(a)?null:a;localStorage.setItem('precoKgCurral',l.precoKg||10.67);localStorage.setItem('precoArrobaCurral',l.precoArroba||320);save();render(false)}
 function extremosText(o,menor=true){if(o.length===0)return '—';if(o.length===1)return `A${o[0].i} ${(o[0].p/30).toFixed(2)}@`;let arr=menor?o.slice(0,2):o.slice(-2).reverse();return arr.map(z=>'A'+z.i+' '+(z.p/30).toFixed(2)+'@').join(' / ')}
 
@@ -358,10 +400,27 @@ function render(reset=true){
   $('sel').innerHTML='<option value="">Selecione um lote</option>'+S.lotes.map(x=>`<option value="${x.id}" ${l&&x.id==l.id?'selected':''}>${x.nome}</option>`).join('');
   ['pesoCard','resCard','histCard','valCard','listCard'].forEach(id=>$(id).classList.toggle('hidden',!l));
   $('badge').classList.toggle('hidden',!l);
+  if(!l){
+    if($('quickLots'))$('quickLots').innerHTML='';
+    if($('activeLotLine'))$('activeLotLine').textContent='';
+    if($('lastWeight'))$('lastWeight').classList.add('hidden');
+    if($('quickUndo'))$('quickUndo').classList.add('hidden');
+  }
 
   if(l){
     let c=calc(l.pesos),v=value(l),o=l.pesos.map((p,i)=>({p,i:i+1})).sort((a,b)=>a.p-b.p);
     $('badge').textContent='Lote atual: '+l.nome;
+    let ativos=S.lotes.filter(x=>x.pesos&&x.pesos.length).sort((a,b)=>(b.sessaoInicio||'').localeCompare(a.sessaoInicio||''));
+    let quick=[l,...ativos.filter(x=>x.id!==l.id),...S.lotes.filter(x=>x.id!==l.id&&!ativos.some(a=>a.id===x.id))].filter((x,i,a)=>a.findIndex(y=>y.id===x.id)===i).slice(0,3);
+    $('quickLots').innerHTML=quick.map(x=>`<button class="quick-lot ${x.id===l.id?'active':''}" onclick="quickSelectLot(${x.id})">${x.nome}<br>(${(x.pesos||[]).length})${x.id===l.id?' ✓':''}</button>`).join('');
+    $('activeLotLine').textContent='Lote ativo: '+l.nome+' • '+c.n+' animal'+(c.n===1?'':'is');
+    let uv=ultimoRegistroVisual;
+    if(uv&&uv.loteId===l.id){
+      $('lastWeight').classList.remove('hidden');
+      $('lastWeight').innerHTML=`<small>✓ SALVO EM ${uv.loteNome.toUpperCase()}</small><strong>${uv.peso.toFixed(1)} kg &nbsp;•&nbsp; <span class="arroba">${(uv.peso/30).toFixed(2)} @</span></strong>`;
+    }else $('lastWeight').classList.add('hidden');
+    $('quickUndo').classList.toggle('hidden',!c.n);
+    if(c.n)$('quickUndo').textContent='DESFAZER ÚLTIMO PESO — '+l.pesos[l.pesos.length-1].toFixed(1)+' kg';
     $('n').textContent=c.n;$('kg').textContent=c.t.toFixed(1)+' kg';$('med').textContent=c.m.toFixed(1)+' kg';
     $('ar').textContent=c.a.toFixed(2)+' @';$('ma').textContent=c.ma.toFixed(2)+' @';
     if(l.anterior&&c.n){let d=c.m-l.anterior;$('ganho').textContent=(d>=0?'+':'')+d.toFixed(1)+' kg'}else $('ganho').textContent='—';
